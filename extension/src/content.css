@@ -1,0 +1,345 @@
+/* Content Script Styles for Job Application Bot Extension */
+
+/* Form indicator styles */
+.job-bot-indicator {
+  position: relative;
+  z-index: 10000;
+}
+
+.job-bot-indicator:hover {
+  transform: scale(1.05);
+  transition: transform 0.2s ease;
+}
+
+/* Active extension indicator */
+.job-bot-active-indicator {
+  z-index: 10001;
+  pointer-events: none;
+}
+
+/* Field highlighting styles */
+.job-bot-field-highlight {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3) !important;
+  border: 2px solid #3b82f6 !important;
+  background-color: rgba(59, 130, 246, 0.1) !important;
+  transition: all 0.3s ease !important;
+}
+
+.job-bot-field-highlight.success {
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3) !important;
+  border-color: #10b981 !important;
+  background-color: rgba(16, 185, 129, 0.1) !important;
+}
+
+.job-bot-field-highlight.error {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3) !important;
+  border-color: #ef4444 !important;
+  background-color: rgba(239, 68, 68, 0.1) !important;
+}
+
+.job-bot-field-highlight.warning {
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.3) !important;
+  border-color: #f59e0b !important;
+  background-color: rgba(245, 158, 11, 0.1) !important;
+}
+
+/* Form overlay for detected application forms */
+.job-bot-form-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(59, 130, 246, 0.05);
+  border: 2px dashed #3b82f6;
+  border-radius: 8px;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.job-bot-form-overlay.visible {
+  opacity: 1;
+}
+
+/* Tooltip styles */
+.job-bot-tooltip {
+  position: absolute;
+  background: #1f2937;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  white-space: nowrap;
+  z-index: 10002;
+  opacity: 0;
+  transform: translateY(-5px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.job-bot-tooltip.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.job-bot-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: #1f2937;
+}
+
+/* Progress indicator for form filling */
+.job-bot-progress {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: white;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  z-index: 10003;
+  min-width: 280px;
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+}
+
+.job-bot-progress.visible {
+  transform: translateX(0);
+}
+
+.job-bot-progress-bar {
+  width: 100%;
+  height: 4px;
+  background: #e5e7eb;
+  border-radius: 2px;
+  overflow: hidden;
+  margin: 8px 0;
+}
+
+.job-bot-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #60a5fa);
+  width: 0%;
+  transition: width 0.5s ease;
+}
+
+.job-bot-progress-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 4px;
+}
+
+.job-bot-progress-detail {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* Success/Error notifications */
+.job-bot-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: white;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  z-index: 10004;
+  min-width: 280px;
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+  border-left: 4px solid #3b82f6;
+}
+
+.job-bot-notification.visible {
+  transform: translateX(0);
+}
+
+.job-bot-notification.success {
+  border-left-color: #10b981;
+}
+
+.job-bot-notification.error {
+  border-left-color: #ef4444;
+}
+
+.job-bot-notification.warning {
+  border-left-color: #f59e0b;
+}
+
+.job-bot-notification-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 4px;
+}
+
+.job-bot-notification-message {
+  font-size: 12px;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+/* Field validation indicators */
+.job-bot-field-status {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: bold;
+  z-index: 10001;
+}
+
+.job-bot-field-status.success {
+  background: #10b981;
+  color: white;
+}
+
+.job-bot-field-status.error {
+  background: #ef4444;
+  color: white;
+}
+
+.job-bot-field-status.pending {
+  background: #f59e0b;
+  color: white;
+}
+
+/* Mini floating toolbar */
+.job-bot-toolbar {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #1f2937;
+  border-radius: 12px;
+  padding: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  z-index: 10005;
+  display: flex;
+  gap: 8px;
+  transform: translateY(100px);
+  opacity: 0;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.job-bot-toolbar.visible {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.job-bot-toolbar-button {
+  background: #374151;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: white;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.job-bot-toolbar-button:hover {
+  background: #4b5563;
+}
+
+.job-bot-toolbar-button.primary {
+  background: #3b82f6;
+}
+
+.job-bot-toolbar-button.primary:hover {
+  background: #2563eb;
+}
+
+/* Global styles when extension is active */
+body.job-bot-active {
+  /* Add any global styles when the extension is active */
+}
+
+body.job-bot-active form.job-bot-detected {
+  position: relative;
+}
+
+/* Ensure our elements are above everything else */
+.job-bot-indicator,
+.job-bot-tooltip,
+.job-bot-progress,
+.job-bot-notification,
+.job-bot-toolbar {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif !important;
+  line-height: 1.4 !important;
+}
+
+/* Animation for form detection */
+@keyframes job-bot-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.05);
+  }
+}
+
+.job-bot-form-detected {
+  animation: job-bot-pulse 2s ease-in-out infinite;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .job-bot-progress,
+  .job-bot-notification {
+    right: 10px;
+    left: 10px;
+    min-width: auto;
+  }
+  
+  .job-bot-toolbar {
+    right: 10px;
+    bottom: 10px;
+  }
+  
+  .job-bot-tooltip {
+    max-width: 200px;
+    white-space: normal;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .job-bot-progress,
+  .job-bot-notification {
+    background: #1f2937;
+    color: white;
+  }
+  
+  .job-bot-progress-text {
+    color: #e5e7eb;
+  }
+  
+  .job-bot-progress-detail {
+    color: #9ca3af;
+  }
+  
+  .job-bot-notification-title {
+    color: #f9fafb;
+  }
+  
+  .job-bot-notification-message {
+    color: #d1d5db;
+  }
+} 

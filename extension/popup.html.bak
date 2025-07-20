@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Job Application Bot</title>
+  <link rel="stylesheet" href="popup.css">
+  <style>
+    .quick-actions {
+      padding: 16px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      margin-bottom: 16px;
+    }
+    
+    .quick-actions h3 {
+      margin: 0 0 12px 0;
+      font-size: 16px;
+      color: #374151;
+    }
+    
+    .quick-actions .btn {
+      width: 100%;
+      margin-bottom: 8px;
+      padding: 12px;
+      font-size: 14px;
+    }
+    
+    .quick-actions .btn:last-child {
+      margin-bottom: 0;
+    }
+    
+    .side-panel-notice {
+      background: #e0f2fe;
+      border: 1px solid #29b6f6;
+      border-radius: 6px;
+      padding: 12px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      color: #01579b;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div class="logo">
+        <img src="assets/icon32.svg" alt="Job Application Bot" class="logo-icon">
+        <h1>Job Application Bot</h1>
+      </div>
+      <div class="status" id="status">
+        <span class="status-dot" id="statusDot"></span>
+        <span id="statusText">Ready</span>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content">
+      <!-- Side Panel Notice -->
+      <div class="side-panel-notice">
+        💡 <strong>Tip:</strong> For the best experience, use the side panel which stays open while you work!
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="quick-actions">
+        <h3>🚀 Quick Actions</h3>
+        <button class="btn btn-primary" id="openSidePanelBtn">
+          📌 Open Side Panel (Stays Open)
+        </button>
+        <button class="btn btn-secondary" id="quickAnalyzeBtn">
+          🔍 Quick Analyze Page
+        </button>
+        <button class="btn btn-secondary" id="quickSearchBtn">
+          🔍 Search Jobs
+        </button>
+      </div>
+
+      <!-- Page Analysis Preview -->
+      <div class="section" id="pageDetection">
+        <h3>📄 Current Page</h3>
+        <div class="page-info">
+          <div class="page-type" id="pageType">Analyzing...</div>
+          <div class="page-url" id="pageUrl"></div>
+        </div>
+      </div>
+
+      <!-- Quick Job Info -->
+      <div class="section hidden" id="jobSection">
+        <h3>💼 Job Details</h3>
+        <div class="job-info">
+          <div class="job-title" id="jobTitle"></div>
+          <div class="job-company" id="jobCompany"></div>
+          <div class="job-location" id="jobLocation"></div>
+        </div>
+      </div>
+
+      <!-- Settings -->
+      <div class="section">
+        <h3>⚙️ Settings</h3>
+        <div class="settings">
+          <div class="setting-item">
+            <label>
+              <input type="checkbox" id="autoDetectForms" checked>
+              Auto-detect forms
+            </label>
+          </div>
+          <button class="btn btn-link" id="openDashboard">
+            🌐 Open Dashboard
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <div class="footer-links">
+        <a href="#" id="helpLink">Help</a>
+        <a href="#" id="feedbackLink">Feedback</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Load the popup.js first -->
+  <script src="popup.js"></script>
+  
+  <!-- Then add the quick action functionality -->
+  <script>
+    // Wait for DOM to be fully loaded
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('📄 Popup DOM loaded, setting up quick actions...');
+      
+      // Helper function to open side panel or fallback to new tab
+      async function openSidePanel() {
+        try {
+          console.log('🔍 Attempting to open side panel...');
+          const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+          console.log('📄 Current tab:', tab.url);
+          
+          // Check if sidePanel API is available
+          if (chrome.sidePanel && chrome.sidePanel.open) {
+            try {
+              await chrome.sidePanel.open({ tabId: tab.id });
+              console.log('✅ Side panel opened successfully');
+              window.close(); // Close popup after opening side panel
+            } catch (sidePanelError) {
+              console.warn('⚠️ Side panel failed, falling back to new tab:', sidePanelError);
+              // Fallback to opening in new tab
+              chrome.tabs.create({ 
+                url: chrome.runtime.getURL('sidepanel.html'),
+                active: true
+              });
+              window.close();
+            }
+          } else {
+            console.warn('⚠️ Side panel API not available, opening in new tab');
+            // Fallback to opening in new tab
+            chrome.tabs.create({ 
+              url: chrome.runtime.getURL('sidepanel.html'),
+              active: true
+            });
+            window.close();
+          }
+        } catch (error) {
+          console.error('❌ Error opening side panel:', error);
+          // Final fallback - try to open in new tab
+          try {
+            chrome.tabs.create({ 
+              url: chrome.runtime.getURL('sidepanel.html'),
+              active: true
+            });
+            window.close();
+          } catch (tabError) {
+            console.error('❌ All methods failed:', tabError);
+            alert('Failed to open extension panel. Please try refreshing the page.');
+          }
+        }
+      }
+      
+      // Add event listeners to quick action buttons
+      const openSidePanelBtn = document.getElementById('openSidePanelBtn');
+      const quickAnalyzeBtn = document.getElementById('quickAnalyzeBtn');
+      const quickSearchBtn = document.getElementById('quickSearchBtn');
+      
+      if (openSidePanelBtn) {
+        openSidePanelBtn.addEventListener('click', function() {
+          console.log('🖱️ Open Side Panel button clicked');
+          openSidePanel();
+        });
+      }
+      
+      if (quickAnalyzeBtn) {
+        quickAnalyzeBtn.addEventListener('click', function() {
+          console.log('🖱️ Quick Analyze button clicked');
+          openSidePanel();
+        });
+      }
+      
+      if (quickSearchBtn) {
+        quickSearchBtn.addEventListener('click', function() {
+          console.log('🖱️ Quick Search button clicked');
+          openSidePanel();
+        });
+      }
+      
+      console.log('✅ Quick action buttons set up successfully');
+    });
+  </script>
+</body>
+</html> 
