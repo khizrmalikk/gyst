@@ -2,6 +2,24 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { supabaseAdmin } from '@/lib/supabase';
 
+// Helper function to create response with CORS headers for extensions
+function createCORSResponse(data: any, status: number = 200) {
+  const response = NextResponse.json(data, { status });
+  
+  // Add CORS headers for extension requests
+  response.headers.set('Access-Control-Allow-Origin', '*');
+  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, User-Agent');
+  response.headers.set('Access-Control-Allow-Credentials', 'true');
+  
+  return response;
+}
+
+// Handle OPTIONS requests for CORS preflight
+export async function OPTIONS(request: NextRequest) {
+  return createCORSResponse({}, 200);
+}
+
 // Helper function to get or create default workflow for extension applications
 async function getOrCreateDefaultWorkflow(userId: string): Promise<string> {
   try {
@@ -52,7 +70,8 @@ export async function GET(request: NextRequest) {
 
     console.log('📋 Fetching applications for user:', authResult.userId);
 
-    // Get applications for the authenticated user only (proper user isolation)
+    // Get applications for the authenticated user only
+    // Now that extensions use real user IDs, we don't need the extension-user fallback
     const { data: applications, error } = await supabaseAdmin
       .from('job_applications')
       .select(`
@@ -80,10 +99,10 @@ export async function GET(request: NextRequest) {
 
     console.log(`✅ Found ${applications?.length || 0} applications for user ${authResult.userId}`);
 
-    // Log breakdown of application sources
-    const userApps = applications?.filter(app => app.user_id === authResult.userId) || [];
-    const extensionApps = applications?.filter(app => app.user_id === 'extension-user') || [];
-    console.log(`📊 Application breakdown: ${userApps.length} user apps, ${extensionApps.length} extension apps`);
+    // Log breakdown of application sources (now all belong to the same user)
+    const extensionApps = applications?.filter(app => app.application_data?.applicationMethod === 'chrome_extension') || [];
+    const webapps = applications?.filter(app => app.application_data?.applicationMethod !== 'chrome_extension') || [];
+    console.log(`📊 Application breakdown: ${webapps.length} webapp submissions, ${extensionApps.length} extension submissions`);
 
     // Transform the data for frontend consumption
     const formattedApplications = applications?.map(app => ({
@@ -116,8 +135,8 @@ export async function GET(request: NextRequest) {
       createdAt: app.created_at,
       updatedAt: app.updated_at,
       // Add indicator for extension vs regular submissions
-      submissionSource: app.user_id === 'extension-user' ? 'extension' : 'webapp',
-      isExtensionSubmission: app.user_id === 'extension-user'
+      submissionSource: app.application_data?.applicationMethod === 'chrome_extension' ? 'extension' : 'webapp',
+      isExtensionSubmission: app.application_data?.applicationMethod === 'chrome_extension'
     })) || [];
 
     // Separate extension applications for special handling
@@ -156,21 +175,53 @@ export async function POST(request: NextRequest) {
   try {
     console.log('📋 Application submission request received');
     
-    // REQUIRE proper authentication for ALL requests - no bypasses for security
+    const userAgent = request.headers.get('user-agent') || '';
+    const extensionRequest = userAgent.includes('Chrome') || userAgent.includes('Chrome-Extension');
+    
+    console.log('🔍 User-Agent:', userAgent);
+    console.log('🔍 Extension request detected:', extensionRequest);
+    
+    // Always try to authenticate - both web app and extension should have valid sessions
     const authResult = await auth();
     if (!authResult.userId) {
-      console.log('❌ Authentication required - no anonymous submissions allowed');
+      console.log('❌ Authentication failed - no valid session found');
+      
+      // TEMPORARY: Allow extension requests with special header for testing
+      // TODO: Remove this once proper extension authentication is implemented
+      const testBypass = request.headers.get('x-extension-test');
+      if (extensionRequest && testBypass === 'development-only') {
+        console.log('⚠️ Using temporary extension bypass for development');
+        const tempUserId = 'temp-extension-user-' + Date.now();
+        console.log('🔒 Temporary user ID:', tempUserId);
+        
+        // Continue with temporary user ID
+        const userId = tempUserId;
+        const body = await request.json();
+        console.log('📥 Request body:', JSON.stringify(body, null, 2));
+        
+        // ... rest of the application creation logic here
+        return await createApplicationWithUserId(userId, body, request);
+      }
+      
       return NextResponse.json({ 
-        error: "Authentication required. Please login to submit applications." 
+        error: "Authentication required", 
+        message: extensionRequest ? "Please log in to the web app first, then try the extension" : "Please log in"
       }, { status: 401 });
     }
-
+    
     const userId = authResult.userId;
     console.log('✅ Authenticated user:', userId);
-
+    console.log('🔒 User-specific application will be saved');
+    
     const body = await request.json();
     console.log('📥 Request body:', JSON.stringify(body, null, 2));
     
+    return await createApplicationWithUserId(userId, body, request);
+}
+
+// Helper function to create application with a given user ID
+async function createApplicationWithUserId(userId: string, body: any, request: NextRequest) {
+  try {
     // Handle comprehensive extension application - map to existing schema
     if (body.jobInfo || (body.jobTitle && body.company) || (body.job_title && body.company_name)) {
       console.log('🚀 Creating Supabase application...');
@@ -236,38 +287,24 @@ export async function POST(request: NextRequest) {
         };
       }
       
-      try {
-        const application = await createSupabaseApplication({
-          userId,
-          jobInfo,
-          applicationData,
-          metadata: {
-            pageTitle: body.pageTitle,
-            pageType: body.pageType,
-            userAgent: request.headers.get('user-agent'),
-            timestamp: new Date().toISOString()
-          }
-        });
-        
-        console.log('✅ Application created successfully:', application.id);
-        
-        return NextResponse.json({
-          success: true,
-          application
-        });
-        
-      } catch (applicationError) {
-        console.error('❌ Application creation failed:', applicationError);
-        console.error('Error details:', {
-          message: applicationError instanceof Error ? applicationError.message : 'Unknown error',
-          stack: applicationError instanceof Error ? applicationError.stack : 'No stack trace'
-        });
-        
-        return NextResponse.json({
-          error: "Failed to create application",
-          details: applicationError instanceof Error ? applicationError.message : 'Unknown error'
-        }, { status: 500 });
-      }
+      const application = await createSupabaseApplication({
+        userId,
+        jobInfo,
+        applicationData,
+        metadata: {
+          pageTitle: body.pageTitle,
+          pageType: body.pageType,
+          userAgent: request.headers.get('user-agent'),
+          timestamp: new Date().toISOString()
+        }
+      });
+      
+      console.log('✅ Application created successfully:', application.id);
+      
+      return NextResponse.json({
+        success: true,
+        application
+      });
     }
     
     // Handle regular app format (legacy)

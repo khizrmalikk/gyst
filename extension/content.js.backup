@@ -22,150 +22,6 @@ window.addEventListener('message', (event) => {
   }
 });
 
-// Debug Functions
-window.debugFormFilling = async function() {
-  console.log('🔧 DEBUG: Testing form filling functionality');
-  
-  // 1. Test profile fetch
-  console.log('📋 Fetching profile...');
-  try {
-    const profileResponse = await fetch('http://localhost:3000/api/extension/profile');
-    const profileData = await profileResponse.json();
-    console.log('✅ Profile data:', profileData);
-    
-    if (!profileData.name || profileData.name.includes('Software Engineering')) {
-      console.warn('⚠️ Profile name issue detected:', profileData.name);
-    }
-  } catch (error) {
-    console.error('❌ Profile fetch error:', error);
-  }
-  
-  // 2. Test form detection
-  console.log('🔍 Detecting forms...');
-  const contentScript = new JobApplicationContentScript();
-  const forms = contentScript.detectApplicationForms();
-  console.log(`✅ Found ${forms.length} forms`);
-  
-  // 3. Test field detection
-  if (forms.length > 0) {
-    console.log('📝 Form fields:', forms[0].fields.map(f => ({
-      name: f.name,
-      label: f.label,
-      type: f.type
-    })));
-  }
-  
-  return { profileData, forms };
-};
-
-// Debug AI Response Generation
-window.debugAIResponses = async function() {
-  console.log('🤖 DEBUG: Testing AI response generation');
-  
-  try {
-    // Mock some test fields
-    const testFields = [
-      { name: 'favorite_project', label: 'What has been your favorite project or proudest accomplishment? Why?' },
-      { name: 'why_company', label: 'Why do you want to work at Palantir?' }
-    ];
-    
-    // Get current profile
-    const profileResponse = await fetch('http://localhost:3000/api/extension/profile');
-    const profile = await profileResponse.json();
-    
-    // Mock job info
-    const jobInfo = {
-      jobTitle: 'Software Engineer',
-      company: 'Palantir',
-      description: 'Software engineering role at Palantir working on data analysis platforms.'
-    };
-    
-    // Test AI responses
-    const fillResponse = await fetch('http://localhost:3000/api/extension/fill-form', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        jobInfo,
-        userProfile: profile,
-        formFields: testFields
-      })
-    });
-    
-    const result = await fillResponse.json();
-    console.log('✅ AI Response Test Results:', result);
-    
-    if (result.formData) {
-      result.formData.forEach(field => {
-        console.log(`📝 Field "${field.label}": "${field.value}"`);
-        if (field.value === 'Software Engineering') {
-          console.warn('⚠️ Still getting generic response!');
-        }
-      });
-    }
-    
-    return result;
-  } catch (error) {
-    console.error('❌ AI response test failed:', error);
-    return { error: error.message };
-  }
-};
-
-// Debug application submission
-window.debugSubmitApplication = async function() {
-  console.log('🧪 DEBUG: Testing application submission');
-  
-  try {
-    const testApplicationData = {
-      jobInfo: {
-        title: 'Software Engineer (Debug Test)',
-        company: 'Test Company',
-        location: 'Remote',
-        description: 'Debug test job submission',
-        requirements: ['JavaScript', 'React']
-      },
-      url: window.location.href,
-      status: 'submitted',
-      appliedAt: new Date().toISOString(),
-      applicationMethod: 'chrome_extension',
-      cvGenerated: true,
-      coverLetterGenerated: true,
-      formFieldsCount: 5,
-      aiResponsesCount: 2,
-      pageTitle: document.title,
-      pageType: 'application_form',
-      notes: 'Debug test submission from content script'
-    };
-
-    console.log('📤 Submitting test application:', testApplicationData);
-
-    const response = await fetch('http://localhost:3000/api/applications', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'User-Agent': 'Chrome-Extension-JobBot/1.0.0 (Debug)'
-      },
-      body: JSON.stringify(testApplicationData)
-    });
-
-    console.log('📊 Response status:', response.status);
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('❌ Submission failed:', response.status, errorText);
-      return { error: `${response.status} - ${errorText}` };
-    }
-
-    const result = await response.json();
-    console.log('✅ Submission successful:', result);
-    
-    return result;
-    
-  } catch (error) {
-    console.error('❌ Debug submission error:', error);
-    return { error: error.message };
-  }
-};
-
 class ContentScriptController {
   constructor() {
     this.isActive = false;
@@ -435,51 +291,7 @@ class ContentScriptController {
       return parentLabel.textContent.replace(input.value, '').trim();
     }
     
-    // Method 3: For dynamic form fields (like cards[...][field0]), look for question text in container
-    if (input.name && input.name.includes('cards[')) {
-      // Look for question text in parent container
-      let container = input.closest('[class*="card"], [class*="question"], [class*="field"], .form-group, .form-field, .input-group');
-      
-      if (container) {
-        // Look for text elements that might contain the question
-        const questionElements = container.querySelectorAll('h1, h2, h3, h4, h5, h6, p, span, div, legend, .question, .label, .title');
-        
-        for (const elem of questionElements) {
-          const text = elem.textContent.trim();
-          // Skip if it's just the input value or too short
-          if (text && text !== input.value && text.length > 5 && !text.includes(input.name)) {
-            // Check if this looks like a question (contains question words or ends with ?)
-            const isQuestion = text.includes('?') || 
-                             /\b(what|why|how|when|where|who|describe|explain|tell|share)\b/i.test(text) ||
-                             text.length > 20; // Long text is likely a question
-            
-            if (isQuestion) {
-              console.log(`🔍 Found question text for ${input.name}: "${text}"`);
-              return text;
-            }
-          }
-        }
-      }
-      
-      // Also check preceding text nodes or elements
-      let prevElement = input.parentElement;
-      for (let i = 0; i < 3; i++) { // Check up to 3 levels up
-        if (!prevElement) break;
-        
-        const textContent = prevElement.textContent.trim();
-        if (textContent && textContent !== input.value && textContent.length > 10) {
-          // Look for question patterns
-          if (textContent.includes('?') || 
-              /\b(what|why|how|when|where|who|describe|explain|tell|share)\b/i.test(textContent)) {
-            console.log(`🔍 Found question in parent for ${input.name}: "${textContent}"`);
-            return textContent;
-          }
-        }
-        prevElement = prevElement.parentElement;
-      }
-    }
-    
-    // Method 4: Previous sibling label
+    // Method 3: Previous sibling label
     let prevElement = input.previousElementSibling;
     while (prevElement) {
       if (prevElement.tagName === 'LABEL') {
@@ -491,7 +303,7 @@ class ContentScriptController {
       prevElement = prevElement.previousElementSibling;
     }
     
-    // Method 5: Aria-label or aria-labelledby
+    // Method 4: Aria-label or aria-labelledby
     if (input.getAttribute('aria-label')) {
       return input.getAttribute('aria-label');
     }
@@ -501,21 +313,12 @@ class ContentScriptController {
       if (labelElement) return labelElement.textContent.trim();
     }
     
-    // Method 6: Look in closest form section for heading text
-    const section = input.closest('section, fieldset, .form-section, .question-section');
-    if (section) {
-      const heading = section.querySelector('h1, h2, h3, h4, h5, h6, legend, .section-title');
-      if (heading && heading.textContent.trim().length > 5) {
-        return heading.textContent.trim();
-      }
-    }
-    
-    // Method 7: Placeholder as fallback
-    if (input.placeholder && input.placeholder.trim().length > 3) {
+    // Method 5: Placeholder as fallback
+    if (input.placeholder) {
       return input.placeholder;
     }
     
-    // Method 8: Name attribute as last resort
+    // Method 6: Name attribute as last resort
     return input.name || 'Unknown Field';
   }
 
@@ -878,33 +681,12 @@ class ContentScriptController {
         break;
         
       case 'radio':
-        // Improved radio button selection logic
-        let shouldSelect = false;
-        
-        // Direct value matches
-        if (field.value === value || field.value.toLowerCase() === value.toLowerCase()) {
-          shouldSelect = true;
-        }
-        // Boolean-style matches
-        else if ((value === 'true' || value === true || value === 'Yes' || value === '1') && 
-                 (field.value.toLowerCase() === 'yes' || field.value === '1' || field.value.toLowerCase() === 'true')) {
-          shouldSelect = true;
-        }
-        else if ((value === 'false' || value === false || value === 'No' || value === '0') && 
-                 (field.value.toLowerCase() === 'no' || field.value === '0' || field.value.toLowerCase() === 'false')) {
-          shouldSelect = true;
-        }
-        
+        const shouldSelect = value === 'true' || value === true || value === 'Yes' || 
+                           field.value === value || field.value.toLowerCase() === value.toLowerCase();
         if (shouldSelect && !field.checked) {
           field.checked = true;
-          // Trigger click and change events for better compatibility
-          field.click();
-          field.dispatchEvent(new Event('change', { bubbles: true }));
-          console.log(`   🔘 Radio button selected: "${field.value}"`);
-        } else if (shouldSelect) {
-          console.log(`   🔘 Radio button already selected: "${field.value}"`);
-        } else {
-          console.log(`   ⚪ Radio button not selected (value mismatch): expected "${value}", field value "${field.value}"`);
+          field.click(); // Trigger click event
+          console.log(`   🔘 Radio button selected`);
         }
         break;
         
@@ -923,27 +705,13 @@ class ContentScriptController {
         try {
           const oldValue = field.value;
           
-          // Direct protection against file inputs
-          if (field.type === 'file') {
-            console.log(`   ⚠️ File input detected, cannot fill: ${field.name || field.id}`);
-            return; // Exit early, don't try to set value
+          // Protect against file input errors
+          if (field.type === 'file' || field.accept) {
+            console.log(`   ⏭️ Detected file input, skipping`);
+            throw new Error(`File input detected: ${field.name || field.id}`);
           }
           
-                      // Protect against file input errors
-            if (field.type === 'file') {
-              console.log('⚠️ Skipping file input field');
-              return;
-            }
-            
-            try {
-              field.value = value;
-            } catch (error) {
-              if (error.message.includes('filename')) {
-                console.log('⚠️ File input error caught, skipping field');
-                return;
-              }
-              throw error;
-            }
+          field.value = value;
           
           // For text fields, also try setting textContent if value doesn't work
           if (field.value !== value && field.tagName.toLowerCase() !== 'input') {
@@ -954,7 +722,7 @@ class ContentScriptController {
         } catch (error) {
           if (error.message.includes('filename') || error.message.includes('file')) {
             console.log(`   ⚠️ File input error caught and handled: ${field.name || field.id}`);
-            return; // Don't propagate file input errors
+            throw new Error(`File input field: ${field.name || field.id}`);
           } else {
             throw error; // Re-throw other errors
           }

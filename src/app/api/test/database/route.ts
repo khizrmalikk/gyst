@@ -24,10 +24,73 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    // Also test job_applications table and show extension apps
+    const { data: applications, error: appsError } = await supabaseAdmin
+      .from('job_applications')
+      .select('id, user_id, job_title, company_name, application_status, created_at, applied_at, application_data')
+      .eq('user_id', 'extension-user')
+      .order('created_at', { ascending: false })
+      .limit(2);
+
+    // Show cleanup recommendation for old extension-user applications
+    const cleanupRecommendation = applications && applications.length > 0 ? {
+      warning: "Found old 'extension-user' applications that lack proper user isolation",
+      count: applications.length,
+      recommendation: "These should be cleaned up for security",
+      cleanupSQL: `
+        -- WARNING: This will delete all old extension-user applications
+        -- Only run this after implementing proper authentication
+        DELETE FROM job_applications WHERE user_id = 'extension-user';
+      `
+    } : null;
+
+    // Test the same data transformation that the GET /api/applications uses
+    const formattedApplications = applications?.map(app => ({
+      id: app.id,
+      userId: app.user_id,
+      jobInfo: {
+        title: app.job_title,
+        company: app.company_name,
+        location: app.application_data?.jobInfo?.location || null,
+        description: app.application_data?.jobInfo?.description || null,
+        requirements: app.application_data?.jobInfo?.requirements || [],
+        salary: app.application_data?.jobInfo?.salary || null
+      },
+      applicationData: {
+        url: app.application_data?.url || '',
+        status: app.application_status,
+        appliedAt: app.applied_at,
+        applicationMethod: app.application_data?.applicationMethod || 'manual',
+        cvGenerated: app.application_data?.cvGenerated || false,
+        coverLetterGenerated: app.application_data?.coverLetterGenerated || false,
+        formFieldsCount: app.application_data?.formFieldsCount || 0,
+        aiResponsesCount: app.application_data?.aiResponsesCount || 0,
+        notes: app.application_data?.notes || ''
+      },
+      metadata: {
+        pageTitle: app.application_data?.metadata?.pageTitle || '',
+        pageType: app.application_data?.metadata?.pageType || 'unknown',
+        timestamp: app.application_data?.metadata?.timestamp || app.created_at
+      },
+      createdAt: app.created_at,
+      isExtensionSubmission: app.user_id === 'extension-user'
+    })) || [];
+
     return NextResponse.json({
       success: true,
       message: 'Database tables exist and are accessible',
-      tablesChecked: ['workflows', 'agent_tasks', 'agent_logs', 'job_applications']
+      tablesChecked: ['workflows', 'agent_tasks', 'agent_logs', 'job_applications'],
+      extensionApplications: {
+        count: applications?.length || 0,
+        recent: applications || [],
+        error: appsError?.message || null
+      },
+      cleanupRecommendation,
+      formattedSample: {
+        count: formattedApplications.length,
+        sampleStructure: formattedApplications[0] || null,
+        hasAppliedAt: formattedApplications[0]?.applicationData?.appliedAt ? true : false
+      }
     });
 
   } catch (error) {

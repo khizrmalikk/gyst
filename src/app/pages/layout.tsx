@@ -2,6 +2,7 @@ import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import UserMenu from "@/components/UserMenu";
+import ExtensionDownloadButton from "@/components/ExtensionDownloadButton";
 
 export default async function AppLayout({
   children,
@@ -18,6 +19,9 @@ export default async function AppLayout({
 
   return (
     <div className="min-h-screen bg-[#F2F0EF]">
+      {/* Extension Download Banner */}
+      <ExtensionDownloadButton variant="banner" />
+      
       {/* Navigation */}
       <nav className="bg-white shadow-sm border-b border-[#C9C8C7]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -35,6 +39,10 @@ export default async function AppLayout({
               <div className="text-sm text-[#66615E]">
                 Credits: <span className="font-semibold text-black">47</span>
               </div>
+              
+              {/* Extension Download Button */}
+              <ExtensionDownloadButton variant="navbar" />
+              
               {/* User Menu Component */}
               <UserMenu />
             </div>
@@ -67,6 +75,13 @@ export default async function AppLayout({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
                 Applications
+              </Link>
+              
+              <Link href="/pages/tailored-profiles" className="flex items-center px-3 py-2 text-sm font-medium text-[#66615E] rounded-md hover:bg-[#F2F0EF] hover:text-black">
+                <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                </svg>
+                Tailored Profiles
               </Link>
               
               <Link href="/pages/profile" className="flex items-center px-3 py-2 text-sm font-medium text-[#66615E] rounded-md hover:bg-[#F2F0EF] hover:text-black">

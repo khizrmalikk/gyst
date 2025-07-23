@@ -16,178 +16,550 @@
     .container {
       width: 100%;
       min-height: 100vh;
+      display: flex;
+      flex-direction: column;
     }
     
-    .header {
-      position: relative;
+    /* Top Status Bar */
+    .status-bar {
+      background: #66615E;
+      color: white;
+      padding: 8px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
     }
     
-    .close-btn {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background: rgba(255, 255, 255, 0.2);
+    .status-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #4ade80;
+    }
+    
+    .refresh-btn {
+      background: rgba(255, 255, 255, 0.1);
       border: none;
       color: white;
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      border-radius: 4px;
       cursor: pointer;
-      font-size: 16px;
       display: flex;
       align-items: center;
       justify-content: center;
       transition: background 0.2s;
     }
     
-    .close-btn:hover {
-      background: rgba(255, 255, 255, 0.3);
+    .refresh-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
     }
     
-    .content {
+    /* Header */
+    .header {
+      background: white;
       padding: 16px;
-      max-height: calc(100vh - 200px);
+      border-bottom: 1px solid #C9C8C7;
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    
+    .logo-icon {
+      width: 24px;
+      height: 24px;
+    }
+    
+    .logo h1 {
+      font-size: 18px;
+      font-weight: 600;
+      margin: 0;
+      color: #66615E;
+    }
+    
+    /* Tab Navigation */
+    .tab-nav {
+      display: flex;
+      gap: 2px;
+      background: #F2F0EF;
+      border-radius: 6px;
+      padding: 2px;
+    }
+    
+    .tab-btn {
+      flex: 1;
+      padding: 8px 12px;
+      background: transparent;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      color: #66615E;
+      transition: all 0.2s;
+    }
+    
+    .tab-btn.active {
+      background: white;
+      color: black;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    
+    .tab-btn:hover:not(.active) {
+      background: rgba(255, 255, 255, 0.5);
+    }
+    
+    /* Content Area */
+    .content {
+      flex: 1;
+      padding: 16px;
       overflow-y: auto;
+    }
+    
+    .tab-content {
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    /* Profile Selector */
+    .profile-selector {
+      background: white;
+      border: 1px solid #C9C8C7;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+    
+    .profile-selector h3 {
+      margin: 0 0 12px 0;
+      font-size: 16px;
+      color: #66615E;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .profile-select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #C9C8C7;
+      border-radius: 6px;
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+    
+    .generate-profile-btn {
+      width: 100%;
+      padding: 10px;
+      background: #66615E;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    
+    .generate-profile-btn:hover {
+      background: #4a403d;
+    }
+    
+    .generate-profile-btn:disabled {
+      background: #C9C8C7;
+      cursor: not-allowed;
+    }
+    
+    /* Workflow Steps */
+    .workflow-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    
+    .workflow-step {
+      background: white;
+      border: 1px solid #C9C8C7;
+      border-radius: 8px;
+      padding: 16px;
+      position: relative;
+    }
+    
+    .step-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    
+    .step-number {
+      width: 28px;
+      height: 28px;
+      background: #66615E;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    
+    .step-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: black;
+    }
+    
+    .step-description {
+      color: #66615E;
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+    
+    .step-action {
+      width: 100%;
+      padding: 10px;
+      background: #66615E;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    
+    .step-action:hover {
+      background: #4a403d;
+    }
+    
+    .step-action:disabled {
+      background: #C9C8C7;
+      cursor: not-allowed;
+    }
+    
+    .step-action.success {
+      background: #22c55e;
+    }
+    
+    .step-action.success:hover {
+      background: #16a34a;
+    }
+    
+    /* Advanced Settings */
+    .advanced-settings {
+      margin-top: 20px;
+      border-top: 1px solid #C9C8C7;
+      padding-top: 20px;
+    }
+    
+    .advanced-toggle {
+      width: 100%;
+      padding: 10px;
+      background: transparent;
+      border: 1px solid #C9C8C7;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 14px;
+      color: #66615E;
+    }
+    
+    .advanced-content {
+      display: none;
+      padding: 16px 0;
+      border-top: 1px solid #C9C8C7;
+      margin-top: 1px;
+    }
+    
+    .advanced-content.show {
+      display: block;
+    }
+    
+    .advanced-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .advanced-action {
+      padding: 8px 12px;
+      background: transparent;
+      border: 1px solid #C9C8C7;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      color: #66615E;
+      text-align: left;
+      transition: all 0.2s;
+    }
+    
+    .advanced-action:hover {
+      background: #F2F0EF;
+    }
+    
+    /* Job Search */
+    .search-form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    
+    .search-input {
+      padding: 12px;
+      border: 1px solid #C9C8C7;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    
+    .search-btn {
+      padding: 12px;
+      background: #66615E;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    
+    .search-btn:hover {
+      background: #4a403d;
+    }
+    
+    .job-results {
+      display: none;
+    }
+    
+    .job-results.show {
+      display: block;
+    }
+    
+    /* Settings */
+    .settings-section {
+      background: white;
+      border: 1px solid #C9C8C7;
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 20px;
+    }
+    
+    .settings-section h3 {
+      margin: 0 0 16px 0;
+      font-size: 16px;
+      color: #66615E;
+    }
+    
+    .setting-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    
+    .setting-item label {
+      font-size: 14px;
+      color: #66615E;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
   <div class="container">
+    <!-- Top Status Bar -->
+    <div class="status-bar">
+      <div class="status-info">
+        <div class="status-dot" id="statusDot"></div>
+        <span id="pageStatus">Ready</span>
+        <span id="pageInfo"></span>
+      </div>
+      <button class="refresh-btn" id="refreshPageBtn" title="Refresh page analysis">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0V9a8 8 0 1115.356 2M15 15v5h-.582M8.642 15A8.001 8.001 0 0019.418 15m0 0V15a8 8 0 00-15.356-2" />
+        </svg>
+      </button>
+    </div>
+
     <!-- Header -->
     <div class="header">
-      <button class="close-btn" id="closeBtn" title="Close side panel">×</button>
       <div class="logo">
         <img src="assets/icon32.svg" alt="Job Application Bot" class="logo-icon">
         <h1>Job Application Bot</h1>
       </div>
-      <div class="status" id="status">
-        <span class="status-dot" id="statusDot"></span>
-        <span id="statusText">Ready</span>
+      
+      <!-- Tab Navigation -->
+      <div class="tab-nav">
+        <button class="tab-btn active" data-tab="workflow">Application Workflow</button>
+        <button class="tab-btn" data-tab="search">Job Search</button>
       </div>
     </div>
 
-    <!-- Main Content -->
+    <!-- Content Area -->
     <div class="content">
-      <!-- Job Search Section -->
-      <div class="section" id="jobSearchSection">
-        <h3>🔍 Job Search</h3>
+      <!-- Application Workflow Tab -->
+      <div class="tab-content active" id="workflowTab">
+        <!-- Profile Selector -->
+        <div class="profile-selector">
+          <h3>
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            Select Profile
+          </h3>
+          <select id="profileSelect" class="profile-select">
+            <option value="">Use Base Profile</option>
+          </select>
+          <button id="generateProfileBtn" class="generate-profile-btn" disabled>
+            ✨ Generate Tailored Profile for This Job
+          </button>
+        </div>
+
+        <!-- Workflow Steps -->
+        <div class="workflow-steps">
+          <!-- Step 1a: Generate CV -->
+          <div class="workflow-step">
+            <div class="step-header">
+              <div class="step-number">1a</div>
+              <div class="step-title">Generate CV</div>
+            </div>
+            <div class="step-description">
+              Create a tailored CV for this job application
+            </div>
+            <button id="generateCVBtn" class="step-action">
+              📄 Generate CV
+            </button>
+          </div>
+
+          <!-- Step 1b: Generate Cover Letter -->
+          <div class="workflow-step">
+            <div class="step-header">
+              <div class="step-number">1b</div>
+              <div class="step-title">Generate Cover Letter</div>
+            </div>
+            <div class="step-description">
+              Create a tailored cover letter for this job application
+            </div>
+            <button id="generateCoverLetterBtn" class="step-action">
+              📝 Generate Cover Letter
+            </button>
+          </div>
+
+          <!-- Step 2: Fill Application -->
+          <div class="workflow-step">
+            <div class="step-header">
+              <div class="step-number">2</div>
+              <div class="step-title">Fill Application Form</div>
+            </div>
+            <div class="step-description">
+              Automatically fill the job application form with your profile data
+            </div>
+            <button id="fillApplicationBtn" class="step-action" disabled>
+              ✍️ Fill Application Form
+            </button>
+          </div>
+
+          <!-- Step 3: Mark as Submitted -->
+          <div class="workflow-step">
+            <div class="step-header">
+              <div class="step-number">✓</div>
+              <div class="step-title">Submit Application</div>
+            </div>
+            <div class="step-description">
+              Mark this application as submitted and save to your dashboard
+            </div>
+            <button id="submitApplicationBtn" class="step-action success">
+              ✅ Mark as Submitted
+            </button>
+          </div>
+        </div>
+
+        <!-- Advanced Settings -->
+        <div class="advanced-settings">
+          <button class="advanced-toggle" id="advancedToggle">
+            <span>⚙️ Advanced Settings</span>
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          
+          <div class="advanced-content" id="advancedContent">
+            <div class="advanced-actions">
+              <button class="advanced-action" id="openDashboardBtn">
+                🌐 Open Dashboard
+              </button>
+              <button class="advanced-action" id="analyzeFormBtn">
+                🔍 Analyze Form Fields
+              </button>
+              <button class="advanced-action" id="generateCVOnlyBtn">
+                📄 Generate CV Only
+              </button>
+              <button class="advanced-action" id="generateCoverLetterOnlyBtn">
+                📝 Generate Cover Letter Only
+              </button>
+              <button class="advanced-action" id="logoutBtn" style="color: #dc3545;">
+                🚪 Sign Out
+              </button>
+            </div>
+            
+            <!-- Settings -->
+            <div class="settings-section">
+              <h3>Settings</h3>
+              <div class="setting-item">
+                <input type="checkbox" id="autoDetectForms" checked>
+                <label for="autoDetectForms">Auto-detect application forms</label>
+              </div>
+              <div class="setting-item">
+                <input type="checkbox" id="showTooltips" checked>
+                <label for="showTooltips">Show field tooltips</label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Job Search Tab -->
+      <div class="tab-content" id="searchTab">
         <div class="search-form">
-          <input type="text" id="jobQuery" placeholder="e.g., Software Engineer" />
-          <input type="text" id="jobLocation" placeholder="Location (optional)" />
-          <button id="searchJobsBtn" class="btn btn-primary">Search Jobs</button>
+          <input type="text" id="jobQuery" class="search-input" placeholder="Job title (e.g., Software Engineer)" />
+          <input type="text" id="jobLocation" class="search-input" placeholder="Location (optional)" />
+          <button id="searchJobsBtn" class="search-btn">🔍 Search Jobs</button>
         </div>
-        <div id="jobResults" class="job-results hidden"></div>
-      </div>
-
-      <!-- Page Detection -->
-      <div class="section" id="pageDetection">
-        <h3>📄 Page Analysis</h3>
-        <div class="page-info">
-          <div class="page-type" id="pageType">Analyzing...</div>
-          <div class="page-url" id="pageUrl"></div>
-        </div>
-        <button id="analyzePageBtn" class="btn btn-secondary" style="margin-top: 8px;">
-          🔄 Re-analyze Page
-        </button>
-      </div>
-
-      <!-- Workflow Guidance -->
-      <div class="section" id="workflowSection">
-        <h3>🚀 Application Workflow</h3>
-        <div id="workflowGuidance" class="workflow-guidance">
-          <!-- Dynamic workflow steps will be inserted here -->
-        </div>
-      </div>
-
-      <!-- Job Information -->
-      <div class="section hidden" id="jobSection">
-        <h3>💼 Job Details</h3>
-        <div class="job-info">
-          <div class="job-title" id="jobTitle"></div>
-          <div class="job-company" id="jobCompany"></div>
-          <div class="job-location" id="jobLocation"></div>
-        </div>
-      </div>
-
-      <!-- Form Analysis -->
-      <div class="section hidden" id="formSection">
-        <h3>📝 Application Form</h3>
-        <div class="form-info">
-          <div class="form-status" id="formStatus">No form detected</div>
-          <div class="form-fields" id="formFields"></div>
-        </div>
-        <button class="btn btn-primary" id="analyzeFormBtn" disabled>
-          🔍 Analyze Form
-        </button>
-      </div>
-
-      <!-- Actions -->
-      <div class="section" id="actionsSection">
-        <h3>🚀 Actions</h3>
-        <div class="actions">
-          <button class="btn btn-primary" id="fillFormBtn" disabled>
-            ✍️ Fill Application Form
-          </button>
-          <button class="btn btn-secondary" id="generateCVBtn">
-            📄 Generate Custom CV
-          </button>
-          <button class="btn btn-secondary" id="generateCoverLetterBtn">
-            📝 Generate Cover Letter
-          </button>
-          <button class="btn btn-success" id="markSubmittedBtn">
-            ✅ Mark as Submitted
-          </button>
-        </div>
-      </div>
-
-      <!-- Progress -->
-      <div class="section hidden" id="progressSection">
-        <h3>⏳ Processing</h3>
-        <div class="progress-bar">
-          <div class="progress-fill" id="progressFill"></div>
-        </div>
-        <div class="progress-text" id="progressText">Initializing...</div>
-      </div>
-
-      <!-- Results -->
-      <div class="section hidden" id="resultsSection">
-        <h3>✅ Results</h3>
-        <div class="results" id="results"></div>
-      </div>
-
-      <!-- Settings -->
-      <div class="section">
-        <h3>⚙️ Settings</h3>
-        <div class="settings">
-          <div class="setting-item">
-            <label>
-              <input type="checkbox" id="autoDetectForms" checked>
-              Auto-detect application forms
-            </label>
-          </div>
-          <div class="setting-item">
-            <label>
-              <input type="checkbox" id="showTooltips" checked>
-              Show field tooltips
-            </label>
-          </div>
-          <button class="btn btn-link" id="openDashboard">
-            🌐 Open Dashboard
-          </button>
-          <button class="btn btn-link" id="logoutBtn" style="color: #dc3545; margin-top: 8px;">
-            🚪 Sign Out
-          </button>
-        </div>
+        <div id="jobResults" class="job-results"></div>
       </div>
     </div>
 
-    <!-- Footer -->
-    <div class="footer">
-      <div class="footer-links">
-        <a href="#" id="helpLink">Help</a>
-        <a href="#" id="feedbackLink">Feedback</a>
-        <a href="#" id="settingsLink">Settings</a>
+    <!-- Progress Section (Hidden by default) -->
+    <div class="section hidden" id="progressSection">
+      <h3>⏳ Processing</h3>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
       </div>
+      <div class="progress-text" id="progressText">Initializing...</div>
+    </div>
+
+    <!-- Results Section (Hidden by default) -->
+    <div class="section hidden" id="resultsSection">
+      <h3>✅ Results</h3>
+      <div class="results" id="results"></div>
     </div>
   </div>
 

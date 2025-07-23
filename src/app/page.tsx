@@ -17,6 +17,7 @@ export default function Home() {
             <a href="#features" className="text-[#66615E] hover:text-black transition-colors">Features</a>
             <a href="#how-it-works" className="text-[#66615E] hover:text-black transition-colors">How It Works</a>
             <a href="#pricing" className="text-[#66615E] hover:text-black transition-colors">Pricing</a>
+            <Link href="/extension" className="text-[#66615E] hover:text-black transition-colors">Extension</Link>
           </nav>
           <div className="flex items-center space-x-4">
             <Link href="/auth/login" className="text-[#66615E] hover:text-black font-medium">
@@ -136,6 +137,114 @@ export default function Home() {
               <div className="w-12 h-12 bg-[#66615E] text-white rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold">4</div>
               <h3 className="text-lg font-semibold text-black mb-2">Track Progress</h3>
               <p className="text-[#66615E]">Monitor applications and responses in your dashboard</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Chrome Extension Section */}
+      <section className="bg-gradient-to-br from-[#66615E] to-[#949392] py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Left side - Content */}
+            <div className="text-white">
+              <div className="inline-flex items-center bg-white/20 rounded-full px-4 py-2 text-sm font-medium mb-6">
+                <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15.5l-4-4 1.06-1.06 2.94 2.94 6.44-6.44 1.06 1.06-7.5 7.5z"/>
+                </svg>
+                Chrome Extension Available
+              </div>
+              
+              <h2 className="text-4xl font-medium mb-6 tracking-tight">
+                Apply to Jobs While You Browse
+              </h2>
+              
+              <p className="text-xl text-white/90 mb-8 leading-relaxed">
+                Install our Chrome extension to generate custom CVs and cover letters instantly while browsing job listings on any website.
+              </p>
+              
+              <div className="space-y-4 mb-8">
+                <div className="flex items-center">
+                  <svg className="w-6 h-6 mr-3 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  <span className="text-lg">One-click CV generation for any job posting</span>
+                </div>
+                <div className="flex items-center">
+                  <svg className="w-6 h-6 mr-3 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <span className="text-lg">AI-powered cover letters tailored to each role</span>
+                </div>
+                <div className="flex items-center">
+                  <svg className="w-6 h-6 mr-3 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H9a2 2 0 00-2 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2V9a2 2 0 012-2h2a2 2 0 012 2v10" />
+                  </svg>
+                  <span className="text-lg">Works on all major job boards</span>
+                </div>
+              </div>
+              
+              <div className="flex flex-col sm:flex-row gap-4">
+                <a 
+                  href="https://chrome.google.com/webstore/detail/gyst-job-application-bot/YOUR_EXTENSION_ID" 
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center bg-white text-[#66615E] hover:bg-[#F2F0EF] px-6 py-3 rounded-lg font-semibold text-lg transition-colors"
+                >
+                  <svg className="w-6 h-6 mr-2" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2.5c-5.25 0-9.5 4.25-9.5 9.5s4.25 9.5 9.5 9.5 9.5-4.25 9.5-9.5-4.25-9.5-9.5-9.5zm-1.5 15.5l-4-4 1.06-1.06 2.94 2.94 6.44-6.44 1.06 1.06-7.5 7.5z"/>
+                  </svg>
+                  Add to Chrome - Free
+                </a>
+                <Link 
+                  href="/extension"
+                  className="inline-flex items-center border-2 border-white text-white hover:bg-white hover:text-[#66615E] px-6 py-3 rounded-lg font-semibold text-lg transition-colors"
+                >
+                  Learn More About Extension
+                </Link>
+              </div>
+            </div>
+            
+            {/* Right side - Extension Preview */}
+            <div className="relative">
+              <div className="bg-white rounded-lg shadow-2xl p-6 max-w-sm mx-auto">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-6 h-6 bg-[#66615E] rounded flex items-center justify-center">
+                      <span className="text-white font-bold text-sm">G</span>
+                    </div>
+                    <span className="font-semibold text-[#66615E]">GYST</span>
+                  </div>
+                  <div className="text-xs text-[#949392]">Chrome Extension</div>
+                </div>
+                
+                <div className="space-y-3">
+                  <div className="bg-[#F2F0EF] p-3 rounded-lg">
+                    <div className="text-sm font-medium text-[#66615E] mb-1">📄 Job Detected</div>
+                    <div className="text-xs text-[#949392]">Software Engineer at TechCorp</div>
+                  </div>
+                  
+                  <button className="w-full bg-[#66615E] text-white py-2 px-4 rounded-lg text-sm font-medium">
+                    📄 Generate Custom CV
+                  </button>
+                  
+                  <button className="w-full bg-[#C9C8C7] text-[#66615E] py-2 px-4 rounded-lg text-sm font-medium">
+                    📝 Generate Cover Letter
+                  </button>
+                  
+                  <div className="text-xs text-center text-[#949392] pt-2">
+                    ✅ Documents tailored for this specific role
+                  </div>
+                </div>
+              </div>
+              
+              {/* Floating elements */}
+              <div className="absolute -top-4 -right-4 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                FREE
+              </div>
+              <div className="absolute -bottom-4 -left-4 bg-white/90 backdrop-blur text-[#66615E] text-xs font-medium px-3 py-2 rounded-full shadow-lg">
+                Works on LinkedIn, Indeed, & more
+              </div>
             </div>
           </div>
         </div>

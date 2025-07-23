@@ -78,16 +78,39 @@ export class PDFGenerator {
     
     // Section title (bold, larger font)
     this.addText(title, 14, true);
-    this.currentY += 4; // More gap after title
+    this.currentY += 6; // More gap after title
     
-    // Section content with better spacing
+    // Handle different content types with better formatting
     const lines = content.split('\n');
-    for (const line of lines) {
-      if (line.trim()) {
-        this.addText(line.trim(), this.options.fontSize, false);
-        this.currentY += 2; // Small gap between lines
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (!line) {
+        this.currentY += 4; // Space for empty lines
+        continue;
+      }
+      
+      // Check if this is a job title/company line (usually followed by location/dates)
+      const nextLine = i + 1 < lines.length ? lines[i + 1].trim() : '';
+      const isJobTitle = line && nextLine && !line.startsWith('-') && !line.startsWith('•') && 
+                        (nextLine.includes('|') || nextLine.includes('20') || nextLine.includes('Present'));
+      
+      if (isJobTitle) {
+        // Job title gets slightly larger font and bold
+        this.addText(line, this.options.fontSize + 1, true);
+        this.currentY += 2;
+      } else if (line.startsWith('-') || line.startsWith('•')) {
+        // Bullet points get slight indent
+        this.addText(`  ${line}`, this.options.fontSize, false);
+        this.currentY += 2;
+      } else if (line.includes('|') && (line.includes('20') || line.includes('Present'))) {
+        // Company/date lines get normal formatting
+        this.addText(line, this.options.fontSize, false);
+        this.currentY += 3; // Bit more space after company/date
       } else {
-        this.currentY += 4; // Larger gap for empty lines
+        // Regular content
+        this.addText(line, this.options.fontSize, false);
+        this.currentY += 2;
       }
     }
     
@@ -131,7 +154,7 @@ export class PDFGenerator {
   private parseStructuredCV(content: string): void {
     const lines = content.split('\n').map(line => line.trim()).filter(line => line.length > 0);
     let currentSection = '';
-    let sectionContent = [];
+    let sectionContent: string[] = [];
 
     for (const line of lines) {
       // Skip duplicate header information that's already in the PDF header
@@ -139,8 +162,9 @@ export class PDFGenerator {
         continue;
       }
       
-      // Check if this line is a section header
-      if (line.match(/^[A-Z\s]{3,}$/) && (
+      // Check if this line is a section header - improved detection
+      const isSection = line.match(/^[A-Z\s&]{3,}$/);
+      const isSectionHeader = isSection && (
         line.includes('PROFESSIONAL SUMMARY') ||
         line.includes('KEY SKILLS') ||
         line.includes('WORK EXPERIENCE') ||
@@ -148,8 +172,20 @@ export class PDFGenerator {
         line.includes('EDUCATION') ||
         line.includes('CERTIFICATIONS') ||
         line.includes('LANGUAGES') ||
-        line.includes('PROJECTS')
-      )) {
+        line.includes('PROJECTS') ||
+        line.includes('PROFESSIONAL LINKS') ||
+        line === 'PROFESSIONAL SUMMARY' ||
+        line === 'KEY SKILLS' ||
+        line === 'WORK EXPERIENCE' ||
+        line === 'EXPERIENCE' ||
+        line === 'EDUCATION' ||
+        line === 'CERTIFICATIONS' ||
+        line === 'LANGUAGES' ||
+        line === 'PROJECTS' ||
+        line === 'PROFESSIONAL LINKS'
+      );
+      
+      if (isSectionHeader) {
         // Save previous section if exists
         if (currentSection && sectionContent.length > 0) {
           this.addSection(currentSection, sectionContent.join('\n'));
@@ -162,9 +198,10 @@ export class PDFGenerator {
         // Add content to current section
         sectionContent.push(line);
       } else {
-        // Content before any section header - skip if it's duplicate header info
+        // Content before any section header - treat as standalone content
         if (!this.isDuplicateHeaderInfo(line)) {
           this.addText(line, this.options.fontSize, false);
+          this.currentY += 3; // Add some spacing
         }
       }
     }

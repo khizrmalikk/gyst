@@ -104,7 +104,7 @@ export class FallbackLLMService {
         }
         
         // Add space between positions (but not after the last one)
-        if (index < userProfile.workHistory.length - 1) {
+        if (index < (userProfile.workHistory?.length || 0) - 1) {
           sections.push('\n');
         }
       });
