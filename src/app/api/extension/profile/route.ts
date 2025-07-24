@@ -8,11 +8,12 @@ export async function GET(request: NextRequest) {
     
     // Check if this is an extension request
     const extensionRequest = request.headers.get('x-extension-request') === 'true';
+    const extensionAuthToken = request.headers.get('x-extension-auth');
     
     if (extensionRequest) {
       console.log('🔧 Extension request - checking authentication...');
       
-      // Try to get authenticated user
+      // For extension requests, we require BOTH Clerk auth AND extension auth token
       const { userId } = await auth();
       
       if (!userId) {
@@ -21,15 +22,30 @@ export async function GET(request: NextRequest) {
           { 
             success: false,
             error: 'Authentication required',
-            message: 'Please log in to your account to use the extension features.'
+            message: 'Please log in to your account to use the extension features.',
+            requiresAuth: true
           },
           { status: 401 }
         );
       }
       
-      console.log('✅ User authenticated:', userId);
+      // Verify extension auth token if provided
+      if (extensionAuthToken && !extensionAuthToken.startsWith(`ext_${userId}_`)) {
+        console.log('❌ Invalid extension auth token');
+        return NextResponse.json(
+          { 
+            success: false,
+            error: 'Invalid extension authorization',
+            message: 'Extension authorization token is invalid. Please reauthorize the extension.',
+            requiresReauth: true
+          },
+          { status: 401 }
+        );
+      }
       
-      // Get complete profile from Supabase database - NO CLERK DATA FALLBACKS
+      console.log('✅ Extension request authenticated for user:', userId);
+      
+      // Get complete profile from Supabase database
       console.log('📊 Fetching profile from Supabase database...');
       const dbProfile = await getUserProfile(userId);
       
@@ -254,8 +270,18 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    // TODO: Add proper authentication for Chrome extension
-    const userId = 'extension-user';
+    // REQUIRE proper authentication - no hardcoded user IDs
+    const { userId } = await auth();
+    
+    if (!userId) {
+      console.log('❌ Profile update request - authentication required');
+      return NextResponse.json({ 
+        error: 'Authentication required',
+        message: 'Please log in to your account to update your profile.'
+      }, { status: 401 });
+    }
+    
+    console.log('✅ Profile update request authenticated for user:', userId);
 
     const profileData = await request.json();
 

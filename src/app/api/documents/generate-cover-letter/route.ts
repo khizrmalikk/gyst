@@ -5,18 +5,21 @@ import { getSmartLLMService } from '../../../../lib/llm';
 
 export async function POST(request: NextRequest) {
   try {
-    // Check authentication - allow extension requests with header
-    const extensionRequest = request.headers.get('x-extension-request') === 'true';
-    
-    if (!extensionRequest) {
-      const { userId } = await auth();
-      if (!userId) {
-        return NextResponse.json(
-          { error: 'Authentication required', requiresAuth: true },
-          { status: 401 }
-        );
-      }
+    // REQUIRE authentication for ALL requests - no bypasses for security
+    const { userId } = await auth();
+    if (!userId) {
+      console.log('❌ Cover letter generation request - authentication required');
+      return NextResponse.json(
+        { 
+          error: 'Authentication required', 
+          message: 'Please log in to your account to generate documents.',
+          requiresAuth: true 
+        },
+        { status: 401 }
+      );
     }
+    
+    console.log('✅ Cover letter generation request authenticated for user:', userId);
 
     const { jobInfo, userProfile } = await request.json();
 

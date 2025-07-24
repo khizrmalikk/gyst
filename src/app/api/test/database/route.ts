@@ -30,19 +30,26 @@ export async function GET(request: NextRequest) {
       .select('id, user_id, job_title, company_name, application_status, created_at, applied_at, application_data')
       .eq('user_id', 'extension-user')
       .order('created_at', { ascending: false })
-      .limit(2);
+      .limit(10);
 
-    // Show cleanup recommendation for old extension-user applications
+    // SECURITY WARNING: Show cleanup recommendation for old extension-user applications
     const cleanupRecommendation = applications && applications.length > 0 ? {
-      warning: "Found old 'extension-user' applications that lack proper user isolation",
+      SECURITY_WARNING: "🚨 FOUND INSECURE APPLICATIONS WITH HARDCODED USER ID",
       count: applications.length,
-      recommendation: "These should be cleaned up for security",
+      risk: "These applications have NO user isolation and represent a major security vulnerability",
+      impact: "All users could potentially see each other's application data",
+      URGENT_ACTION_REQUIRED: "Clean up these applications immediately",
       cleanupSQL: `
-        -- WARNING: This will delete all old extension-user applications
-        -- Only run this after implementing proper authentication
+        -- URGENT: Delete all insecure 'extension-user' applications
+        -- These applications have no proper user isolation
         DELETE FROM job_applications WHERE user_id = 'extension-user';
-      `
-    } : null;
+      `,
+      verification: "After cleanup, re-run this endpoint to verify no extension-user apps remain",
+      prevention: "Extension authentication has been fixed to prevent future occurrences"
+    } : {
+      status: "✅ No insecure extension-user applications found",
+      message: "Database is clean of hardcoded user ID applications"
+    };
 
     // Test the same data transformation that the GET /api/applications uses
     const formattedApplications = applications?.map(app => ({

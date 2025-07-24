@@ -131,6 +131,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       }
       break;
       
+    case 'extensionAuthSuccess':
+      console.log('🔑 Background received extension auth success');
+      handleExtensionAuthSuccess(message.authData, message.state);
+      break;
+      
     default:
       console.log('🤷 Unknown message action:', message.action);
   }
@@ -226,6 +231,45 @@ function handleApplicationSubmitted(applicationData, tab) {
     });
   } catch (error) {
     console.error('❌ Error handling application submission:', error);
+  }
+}
+
+// Handle extension authorization success
+async function handleExtensionAuthSuccess(authData, state) {
+  try {
+    console.log('✅ Processing extension authorization success');
+    
+    // Store the auth data in chrome.storage
+    await chrome.storage.local.set({
+      extensionAuth: {
+        userId: authData.userId,
+        token: authData.token,
+        timestamp: authData.timestamp,
+        userName: authData.userName,
+        userEmail: authData.userEmail
+      }
+    });
+    
+    console.log('✅ Extension auth stored in background script');
+    
+    // Try to notify any open side panels
+    const tabs = await chrome.tabs.query({});
+    for (const tab of tabs) {
+      try {
+        // Send message to any side panels that might be open
+        chrome.tabs.sendMessage(tab.id, {
+          action: 'authSuccess',
+          authData: authData
+        }).catch(() => {
+          // Ignore errors for tabs that don't have content scripts
+        });
+      } catch (error) {
+        // Ignore errors for inactive tabs
+      }
+    }
+    
+  } catch (error) {
+    console.error('❌ Error handling extension auth success:', error);
   }
 }
 

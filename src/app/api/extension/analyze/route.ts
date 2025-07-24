@@ -4,8 +4,18 @@ import { getSmartLLMService } from '../../../../lib/llm';
 
 export async function POST(request: NextRequest) {
   try {
-    // TODO: Add proper authentication for Chrome extension
-    const userId = 'extension-user';
+    // REQUIRE proper authentication - no hardcoded user IDs
+    const { userId } = await auth();
+    
+    if (!userId) {
+      console.log('❌ Extension analyze request - authentication required');
+      return NextResponse.json({ 
+        error: 'Authentication required',
+        message: 'Please log in to your account to use extension features.'
+      }, { status: 401 });
+    }
+    
+    console.log('✅ Extension analyze request authenticated for user:', userId);
 
     const { url, title, content, action } = await request.json();
 

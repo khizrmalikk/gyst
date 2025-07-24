@@ -20,6 +20,20 @@ window.addEventListener('message', (event) => {
       version: chrome.runtime.getManifest()?.version || '1.0.0'
     }, '*');
   }
+  
+  // Handle extension authorization success
+  if (event.data?.type === 'EXTENSION_AUTH_SUCCESS') {
+    console.log('🔑 Content script received extension auth success');
+    
+    // Forward the auth data to the extension background script
+    chrome.runtime.sendMessage({
+      action: 'extensionAuthSuccess',
+      authData: event.data.data,
+      state: event.data.state
+    }).catch(error => {
+      console.error('Failed to send auth success to background:', error);
+    });
+  }
 });
 
 // Debug Functions

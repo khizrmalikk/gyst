@@ -45,81 +45,137 @@ class SidePanelController {
 
   async checkAuthentication() {
     try {
-      console.log('🔐 Checking user authentication...');
+      console.log('🔐 Checking extension authentication...');
       
-      // Use the extension-specific profile endpoint for auth check
-      const response = await fetch(`${this.apiBaseUrl}/api/extension/profile`, {
+      // Check if user is logged in to the web app
+      const response = await fetch(`${this.apiBaseUrl}/api/extension/check-auth`, {
         method: 'GET',
-        credentials: 'include', // Include cookies for authentication
-        headers: {
-          'Content-Type': 'application/json',
-          'x-extension-request': 'true'
-        }
+        credentials: 'include'
       });
 
-      console.log('🔐 Auth check response status:', response.status);
-      console.log('🔐 Auth check response headers:', Object.fromEntries(response.headers.entries()));
-
-      // Check if we got JSON response
-      const contentType = response.headers.get('content-type');
-      const isJson = contentType && contentType.includes('application/json');
-      
-      if (!isJson) {
-        console.log('❌ Got non-JSON response (likely HTML auth redirect), user not authenticated');
-        this.isAuthenticated = false;
-        this.authChecked = true;
-        return;
-      }
+      console.log('🔐 Auth verification response status:', response.status);
 
       if (response.ok) {
         const result = await response.json();
-        if (result.success && result.authenticated) {
+        if (result.success && result.authenticated && result.profile) {
           this.isAuthenticated = true;
           this.currentUser = result.profile;
-          console.log('✅ User authenticated:', result.profile.name || result.profile.email);
+          console.log('✅ Extension authentication verified for user:', result.profile.name);
         } else {
+          console.log('❌ Invalid response structure from server');
           this.isAuthenticated = false;
-          console.log('❌ Authentication failed:', result.error || 'Unknown error');
         }
-      } else if (response.status === 401) {
-        const result = await response.json();
-        this.isAuthenticated = false;
-        console.log('❌ User not authenticated:', result.error || 'Unauthorized');
       } else {
-        throw new Error(`Authentication check failed: ${response.status}`);
+        console.log('❌ Server rejected extension authentication');
+        this.isAuthenticated = false;
       }
     } catch (error) {
-      console.error('❌ Authentication check failed:', error);
+      console.error('❌ Extension authentication check failed:', error);
       this.isAuthenticated = false;
     }
     
     this.authChecked = true;
+    
+    if (!this.isAuthenticated) {
+      console.log('🚫 EXTENSION AUTHENTICATION REQUIRED - User must explicitly authorize extension');
+    }
+  }
+
+  // Get stored extension authentication
+  async getStoredExtensionAuth() {
+    try {
+      const result = await chrome.storage.local.get(['extensionAuth']);
+      const auth = result.extensionAuth;
+      
+      if (!auth || !auth.token || !auth.userId || !auth.timestamp) {
+        return null;
+      }
+      
+      // Check if auth is expired (24 hours)
+      const expiryTime = 24 * 60 * 60 * 1000; // 24 hours
+      if (Date.now() - auth.timestamp > expiryTime) {
+        console.log('⏰ Stored extension auth expired');
+        await this.clearStoredExtensionAuth();
+        return null;
+      }
+      
+      return auth;
+    } catch (error) {
+      console.error('❌ Error reading stored extension auth:', error);
+      return null;
+    }
+  }
+
+  // Store extension authentication
+  async storeExtensionAuth(userId, token) {
+    try {
+      const authData = {
+        userId: userId,
+        token: token,
+        timestamp: Date.now()
+      };
+      
+      await chrome.storage.local.set({ extensionAuth: authData });
+      console.log('✅ Extension authentication stored');
+    } catch (error) {
+      console.error('❌ Error storing extension auth:', error);
+    }
+  }
+
+  // Clear stored extension authentication
+  async clearStoredExtensionAuth() {
+    try {
+      await chrome.storage.local.remove(['extensionAuth']);
+      this.isAuthenticated = false;
+      this.currentUser = null;
+      console.log('🗑️ Extension authentication cleared');
+    } catch (error) {
+      console.error('❌ Error clearing extension auth:', error);
+    }
   }
 
   showAuthRequired() {
-    const container = document.getElementById('main-content');
-    if (!container) return;
+    // Try to find the main container - check multiple possible containers
+    let container = document.querySelector('.content');
+    if (!container) {
+      container = document.querySelector('.container');
+    }
+    if (!container) {
+      container = document.body;
+    }
+    
+    if (!container) {
+      console.error('❌ Could not find container element for auth screen');
+      return;
+    }
+    
+    console.log('🔐 Showing login required screen');
 
     container.innerHTML = `
       <div class="auth-required">
         <div class="auth-icon">🔐</div>
-        <h2>Authentication Required</h2>
-        <p>Please log in to your account to use the job application bot.</p>
+        <h2>Please Log In</h2>
+        <p>You need to be logged in to your account to use the Job Application Bot extension.</p>
+        <div class="auth-features">
+          <div class="feature-item">✅ Same account as web app</div>
+          <div class="feature-item">✅ No separate authorization needed</div>
+          <div class="feature-item">✅ Secure and simple</div>
+        </div>
         <div class="auth-actions">
           <button id="loginBtn" class="primary-button">
-            🌐 Open Login Page
+            🌐 Go to Login Page
           </button>
           <button id="refreshAuthBtn" class="secondary-button">
             🔄 Check Again
           </button>
         </div>
         <div class="auth-help">
-          <p><small>💡 Make sure you're logged in at localhost:3000, then click "Check Again"</small></p>
+          <p><small>💡 Log in to your account at localhost:3000, then click "Check Again"</small></p>
         </div>
       </div>
     `;
 
-    // Add styles for auth UI
+    // Add styles for auth UI (keeping existing styles)
     if (!document.getElementById('auth-styles')) {
       const style = document.createElement('style');
       style.id = 'auth-styles';
@@ -136,27 +192,41 @@ class SidePanelController {
         .auth-required h2 {
           color: #1a1a1a;
           margin-bottom: 10px;
+          font-size: 24px;
         }
         .auth-required p {
           color: #666;
-          margin-bottom: 30px;
+          margin-bottom: 20px;
           line-height: 1.5;
+        }
+        .auth-features {
+          background: #f8f9fa;
+          border-radius: 8px;
+          padding: 20px;
+          margin: 20px 0;
+          border-left: 4px solid #007bff;
+        }
+        .feature-item {
+          color: #28a745;
+          margin: 8px 0;
+          font-weight: 500;
         }
         .auth-actions {
           display: flex;
           flex-direction: column;
-          gap: 10px;
-          margin-bottom: 20px;
+          gap: 12px;
+          margin: 30px 0 20px 0;
         }
         .primary-button {
           background: #007bff;
           color: white;
           border: none;
-          padding: 12px 24px;
-          border-radius: 6px;
+          padding: 14px 24px;
+          border-radius: 8px;
           cursor: pointer;
-          font-size: 14px;
-          font-weight: 500;
+          font-size: 16px;
+          font-weight: 600;
+          transition: background 0.2s;
         }
         .primary-button:hover {
           background: #0056b3;
@@ -164,24 +234,27 @@ class SidePanelController {
         .secondary-button {
           background: #f8f9fa;
           color: #333;
-          border: 1px solid #ddd;
+          border: 2px solid #dee2e6;
           padding: 12px 24px;
-          border-radius: 6px;
+          border-radius: 8px;
           cursor: pointer;
           font-size: 14px;
+          font-weight: 500;
+          transition: all 0.2s;
         }
         .secondary-button:hover {
           background: #e9ecef;
+          border-color: #adb5bd;
         }
         .auth-help {
           margin-top: 20px;
           padding: 15px;
-          background: #f0f8ff;
+          background: #fff3cd;
           border-radius: 6px;
-          border-left: 4px solid #007bff;
+          border-left: 4px solid #ffc107;
         }
         .auth-help small {
-          color: #0056b3;
+          color: #856404;
         }
       `;
       document.head.appendChild(style);
@@ -193,11 +266,13 @@ class SidePanelController {
     });
 
     document.getElementById('refreshAuthBtn')?.addEventListener('click', async () => {
+      console.log('🔄 Re-checking authentication...');
       await this.checkAuthentication();
       if (this.isAuthenticated) {
+        console.log('✅ Now authenticated, reloading extension...');
         location.reload(); // Reload the extension panel
       } else {
-        this.showMessage('Still not authenticated. Please log in first.', 'warning');
+        this.showMessage('Still not logged in. Please log in to your account first.', 'warning');
       }
     });
   }
@@ -244,6 +319,11 @@ class SidePanelController {
     // Set up advanced settings toggle
     document.getElementById('advancedToggle')?.addEventListener('click', () => {
       this.toggleAdvancedSettings();
+    });
+
+    // Set up logout functionality
+    document.getElementById('logoutBtn')?.addEventListener('click', () => {
+      this.logoutFromExtension();
     });
 
     // Set up search functionality
@@ -435,6 +515,31 @@ class SidePanelController {
         messageEl.parentNode.removeChild(messageEl);
       }
     }, 3000);
+  }
+
+  // Helper method to verify user is authenticated before operations
+  verifyAuthentication() {
+    if (!this.authChecked) {
+      console.log('⚠️ Authentication not yet checked');
+      this.showMessage('Please wait while we verify your authentication...', 'warning');
+      return false;
+    }
+    
+    if (!this.isAuthenticated) {
+      console.log('🚫 Operation blocked - user not authenticated');
+      this.showMessage('You must be logged in to use this feature. Please log in first.', 'error');
+      this.showAuthRequired();
+      return false;
+    }
+    
+    if (!this.currentUser) {
+      console.log('🚫 Operation blocked - no user profile available');
+      this.showMessage('User profile not available. Please log in again.', 'error');
+      this.showAuthRequired();
+      return false;
+    }
+    
+    return true;
   }
 
   // Generate CV for current job
@@ -1173,7 +1278,8 @@ class SidePanelController {
       const profileResponse = await fetch(`${this.apiBaseUrl}/api/extension/profile`, {
         method: 'GET',
         headers: {
-          'x-extension-request': 'true'
+          'x-extension-request': 'true',
+          'Content-Type': 'application/json'
         },
         credentials: 'include'
       });
@@ -1183,6 +1289,11 @@ class SidePanelController {
         if (profileData.success) {
           this.baseProfile = profileData.profile;
         }
+      } else if (profileResponse.status === 401) {
+        // Auth failed - show auth screen
+        console.log('❌ Profile request failed - user not authenticated');
+        this.showAuthRequired();
+        return null;
       }
     }
 
@@ -1325,6 +1436,30 @@ class SidePanelController {
       jobData: this.currentJobData
     });
   }
+
+  // Logout from extension (redirect to web app logout)
+  async logoutFromExtension() {
+    try {
+      console.log('🚪 Redirecting to web app logout...');
+      
+      // Open web app logout page
+      chrome.tabs.create({ url: `${this.apiBaseUrl}/auth/logout` });
+      
+      // Reset local authentication state
+      this.authChecked = false;
+      this.isAuthenticated = false;
+      this.currentUser = null;
+      
+      // Show auth required screen
+      this.showAuthRequired();
+      
+      this.showMessage('Redirected to logout page. Log back in to use the extension again.', 'info');
+      
+    } catch (error) {
+      console.error('❌ Error during logout redirect:', error);
+      this.showMessage('Error during logout. Please try again.', 'error');
+    }
+  }
 }
 
 // Initialize side panel when DOM is loaded
@@ -1428,7 +1563,35 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
   };
-}); 
+
+  // Debug functions for authentication
+  window.debugCheckAuth = async function() {
+    console.log('🔧 Debug: Checking authentication state...');
+    if (window.sidePanelController) {
+      await window.sidePanelController.checkAuthentication();
+      console.log('Auth state:', {
+        isAuthenticated: window.sidePanelController.isAuthenticated,
+        authChecked: window.sidePanelController.authChecked,
+        hasUser: !!window.sidePanelController.currentUser,
+        userName: window.sidePanelController.currentUser?.name
+      });
+    }
+  };
+
+  window.debugShowAuthScreen = function() {
+    console.log('🔧 Debug: Manually showing auth screen...');
+    if (window.sidePanelController) {
+      window.sidePanelController.showAuthRequired();
+    }
+  };
+
+  window.debugCheckContainers = function() {
+    console.log('🔧 Debug: Checking container elements...');
+    console.log('.content:', document.querySelector('.content'));
+    console.log('.container:', document.querySelector('.container'));
+    console.log('body:', document.body);
+  };
+});
 
 // Add message styles if not already present
 if (!document.getElementById('message-styles')) {

@@ -1,8 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@clerk/nextjs/server';
 import { getSmartLLMService } from '../../../../lib/llm';
 
 export async function POST(request: NextRequest) {
   try {
+    // REQUIRE proper authentication - no anonymous access
+    const { userId } = await auth();
+    
+    if (!userId) {
+      console.log('❌ Form fill request - authentication required');
+      return NextResponse.json({ 
+        error: 'Authentication required',
+        message: 'Please log in to your account to use extension form filling features.'
+      }, { status: 401 });
+    }
+    
+    console.log('✅ Form fill request authenticated for user:', userId);
+
     const { jobInfo, userProfile, formFields } = await request.json();
 
     console.log('📋 Form fill request received:', {
