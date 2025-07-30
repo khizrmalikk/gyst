@@ -149,15 +149,20 @@ function handlePageChanged(message, tab) {
   console.log('🔄 Page changed on tab:', tab.id, 'URL:', message.url);
   
   try {
-    // Forward the page change message to the side panel if it's open
-    // Note: We can't directly message the side panel, but we can store the state
-    // The side panel will need to periodically check for updates or listen differently
-    
-    // For now, we'll just log it and let the side panel's own URL monitoring handle it
     // Clear badges when page changes
     chrome.action.setBadgeText({
       text: '',
       tabId: tab.id
+    });
+
+    // Notify sidepanel about page change
+    chrome.runtime.sendMessage({
+      action: 'pageChanged',
+      url: message.url,
+      jobData: message.jobData,
+      tabId: tab.id
+    }).catch(error => {
+      console.log('🔄 No sidepanel listening for page changed message:', error.message);
     });
     
   } catch (error) {
@@ -187,8 +192,19 @@ function handleFormsDetected(forms, url, tab) {
         tabId: tab.id
       });
     }
+
+    // Notify sidepanel about form detection
+    chrome.runtime.sendMessage({
+      action: 'formsDetected',
+      forms: forms,
+      url: url,
+      tabId: tab.id
+    }).catch(error => {
+      console.log('📝 No sidepanel listening for forms detected message:', error.message);
+    });
+    
   } catch (error) {
-    console.error('❌ Error setting badge:', error);
+    console.error('❌ Error handling form detection:', error);
   }
 }
 

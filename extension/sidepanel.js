@@ -24,6 +24,9 @@ class SidePanelController {
   async init() {
     console.log('🚀 Initializing side panel controller...');
     
+    // Set up message listeners first
+    this.setupMessageListeners();
+    
     // Check authentication first
     await this.checkAuthentication();
     
@@ -40,6 +43,59 @@ class SidePanelController {
     
     // Initialize the UI
     this.initializeUI();
+    this.updateCurrentPage();
+  }
+
+  // Set up message listeners for communication with background/content scripts
+  setupMessageListeners() {
+    console.log('📻 Setting up message listeners...');
+    
+    // Listen for messages from background script
+    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+      console.log('📨 Sidepanel received message:', message);
+      
+      switch (message.action) {
+        case 'formsDetected':
+          this.handleFormsDetected(message.forms, message.url);
+          break;
+        case 'pageChanged':
+          this.handlePageChanged(message.url, message.jobData);
+          break;
+        default:
+          console.log('🤷 Unknown message action in sidepanel:', message.action);
+      }
+      
+      return true; // Keep message channel open
+    });
+  }
+
+  // Handle form detection from content script
+  handleFormsDetected(forms, url) {
+    console.log('📝 Sidepanel handling forms detected:', forms.length, 'forms on', url);
+    
+    // Update current page data
+    this.detectedForms = forms;
+    
+    // Check if this is likely an application form page
+    if (forms.length > 0 && this.isApplicationFormUrl(url)) {
+      this.currentPageType = 'application_form';
+    }
+    
+    // Update UI to reflect form detection
+    this.updateWorkflowUI();
+    this.updateStatusBar('Ready', this.getPageTypeDisplay(this.currentPageType));
+  }
+
+  // Handle page changes from content script
+  handlePageChanged(url, jobData) {
+    console.log('🔄 Sidepanel handling page change to:', url);
+    
+    // Update current data
+    this.currentTab.url = url;
+    this.currentJobData = jobData;
+    this.detectedForms = [];
+    
+    // Re-analyze the page
     this.updateCurrentPage();
   }
 
@@ -376,15 +432,46 @@ class SidePanelController {
     console.log('🔍 Analyzing page content...');
     
     try {
-      // Basic page type detection from URL
+      // Get page data from content script
+      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+      const tab = tabs[0];
+      
+      // Try to get forms data from content script
+      let formsData = null;
+      try {
+        formsData = await chrome.tabs.sendMessage(tab.id, { action: 'analyzeForms' });
+        if (formsData && formsData.forms) {
+          this.detectedForms = formsData.forms;
+        }
+      } catch (error) {
+        console.log('📝 No content script response for forms, using URL analysis only');
+      }
+      
+      // Enhanced page type detection
       const url = this.currentTab.url.toLowerCase();
       
-      if (url.includes('linkedin.com/jobs/view') || 
-          url.includes('jobs.lever.co') || 
-          url.includes('greenhouse.io') ||
-          url.includes('workday.com') ||
-          url.includes('careers') ||
-          url.includes('jobs')) {
+      // Check if this is an application form page
+      if (this.isApplicationFormUrl(url) && this.detectedForms && this.detectedForms.length > 0) {
+        this.currentPageType = 'application_form';
+        
+        // Extract job information for application form
+        this.currentJobData = {
+          title: this.currentTab.title.split(' - ')[0] || 'Job Application',
+          company: this.extractCompanyFromURL(url) || 'Company Not Found',
+          url: this.currentTab.url,
+          pageType: 'application_form',
+          formsDetected: this.detectedForms.length
+        };
+        
+        console.log('📝 Application form detected:', this.currentJobData);
+        this.updateStatusBar('Ready', `${this.getPageTypeDisplay(this.currentPageType)} (${this.detectedForms.length} forms)`);
+        
+      } else if (url.includes('linkedin.com/jobs/view') || 
+                 url.includes('jobs.lever.co') || 
+                 url.includes('greenhouse.io') ||
+                 url.includes('workday.com') ||
+                 url.includes('careers') ||
+                 url.includes('jobs')) {
         
         this.currentPageType = 'job_listing';
         
@@ -411,6 +498,23 @@ class SidePanelController {
       this.currentJobData = null;
       this.updateStatusBar('Ready', 'Analysis failed');
     }
+  }
+
+  // Check if URL indicates an application form page
+  isApplicationFormUrl(url) {
+    const applicationKeywords = [
+      '/apply',
+      '/application',
+      'apply.php',
+      'application.php',
+      'submit',
+      'form',
+      'career-form',
+      '/jobs/application/',
+      '/careers/apply'
+    ];
+    
+    return applicationKeywords.some(keyword => url.toLowerCase().includes(keyword));
   }
 
   // Extract company name from URL patterns
@@ -550,8 +654,8 @@ class SidePanelController {
       return;
     }
 
-    if (this.currentPageType !== 'job_listing') {
-      this.showMessage('Please navigate to a job listing first', 'warning');
+    if (this.currentPageType !== 'job_listing' && this.currentPageType !== 'application_form') {
+      this.showMessage('Please navigate to a job listing or application form first', 'warning');
       return;
     }
 
@@ -612,8 +716,8 @@ class SidePanelController {
       return;
     }
 
-    if (this.currentPageType !== 'job_listing') {
-      this.showMessage('Please navigate to a job listing first', 'warning');
+    if (this.currentPageType !== 'job_listing' && this.currentPageType !== 'application_form') {
+      this.showMessage('Please navigate to a job listing or application form first', 'warning');
       return;
     }
 
@@ -894,8 +998,8 @@ class SidePanelController {
 
   // Generate tailored profile for current job
   async generateTailoredProfile() {
-    if (this.currentPageType !== 'job_listing') {
-      this.showMessage('Please navigate to a job listing first', 'warning');
+    if (this.currentPageType !== 'job_listing' && this.currentPageType !== 'application_form') {
+      this.showMessage('Please navigate to a job listing or application form first', 'warning');
       return;
     }
 
@@ -1007,8 +1111,8 @@ class SidePanelController {
       return;
     }
 
-    if (this.currentPageType !== 'job_listing') {
-      this.showMessage('Please navigate to a job listing first', 'warning');
+    if (this.currentPageType !== 'job_listing' && this.currentPageType !== 'application_form') {
+      this.showMessage('Please navigate to a job listing or application form first', 'warning');
       return;
     }
 
@@ -1410,6 +1514,7 @@ class SidePanelController {
   getPageTypeDisplay(pageType) {
     const typeMap = {
       'job_listing': '📋 Job Listing Detected',
+      'application_form': '📝 Application Form Detected',
       'application': '📝 Application Form Detected', 
       'job_board': '🔍 Job Board Page',
       'unknown': '🌐 General Website'

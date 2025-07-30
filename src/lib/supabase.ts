@@ -24,6 +24,7 @@ export interface UserProfile {
   ethnicity?: string
   gender?: string
   additional_information?: string
+  credits: number // Credits available for user actions
   created_at: string
   updated_at: string
   
@@ -150,6 +151,7 @@ export const createUserProfile = async (profile: Omit<UserProfile, 'id' | 'creat
     gender: profile.gender,
     additional_information: profile.additional_information,
     skills: profile.skills,
+    credits: profile.credits || 50, // Default to 50 credits for new users
     profile_complete: profile.profile_complete,
     cv_uploaded: profile.cv_uploaded
   }
@@ -172,5 +174,82 @@ export const createUserProfile = async (profile: Omit<UserProfile, 'id' | 'creat
     experience: [],
     certifications: [],
     languages: []
+  }
+} 
+
+// Credit management functions
+export const getUserCredits = async (userId: string): Promise<number> => {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('user_profiles')
+      .select('credits')
+      .eq('user_id', userId)
+      .single()
+
+    if (error) {
+      console.error('Error fetching user credits:', error)
+      return 0
+    }
+
+    return data?.credits || 0
+  } catch (error) {
+    console.error('Error fetching user credits:', error)
+    return 0
+  }
+}
+
+export const deductCredits = async (
+  userId: string, 
+  amount: number, 
+  description: string = 'Credit usage',
+  entityType?: string,
+  entityId?: string
+): Promise<boolean> => {
+  try {
+    const { data, error } = await supabaseAdmin
+      .rpc('deduct_credits', {
+        p_user_id: userId,
+        p_amount: amount,
+        p_description: description,
+        p_entity_type: entityType,
+        p_entity_id: entityId
+      })
+
+    if (error) {
+      console.error('Error deducting credits:', error)
+      return false
+    }
+
+    return data === true
+  } catch (error) {
+    console.error('Error deducting credits:', error)
+    return false
+  }
+}
+
+export const addCredits = async (
+  userId: string, 
+  amount: number, 
+  description: string = 'Credit addition',
+  transactionType: string = 'credit'
+): Promise<boolean> => {
+  try {
+    const { data, error } = await supabaseAdmin
+      .rpc('add_credits', {
+        p_user_id: userId,
+        p_amount: amount,
+        p_description: description,
+        p_transaction_type: transactionType
+      })
+
+    if (error) {
+      console.error('Error adding credits:', error)
+      return false
+    }
+
+    return data === true
+  } catch (error) {
+    console.error('Error adding credits:', error)
+    return false
   }
 } 
