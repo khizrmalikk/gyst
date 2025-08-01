@@ -9,9 +9,10 @@ const supabase = createClient(
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const params = await context.params;
     console.log('🔍 Getting tailored profile:', params.id);
     
     // Get user ID from Clerk
@@ -71,9 +72,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const params = await context.params;
     console.log('✏️ Updating tailored profile:', params.id);
     
     // Get user ID from Clerk
@@ -152,9 +154,10 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const params = await context.params;
     console.log('🗑️ Deleting tailored profile:', params.id);
     
     // Get user ID from Clerk

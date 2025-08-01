@@ -3,8 +3,9 @@ import { auth } from '@clerk/nextjs/server'
 import { supabaseAdmin, getUserProfile } from '@/lib/supabase'
 
 // PUT /api/profile/experience/[id] - Update experience record
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
+    const params = await context.params;
     const { userId } = await auth()
     
     if (!userId) {
@@ -70,9 +71,10 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 // DELETE /api/profile/experience/[id] - Delete experience record
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const params = await context.params;
     const { userId } = await auth()
     
     if (!userId) {
