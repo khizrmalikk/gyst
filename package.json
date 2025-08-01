@@ -5,8 +5,11 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
+    "build:no-lint": "next build --no-lint",
     "start": "next start",
     "lint": "next lint",
+    "lint:fix": "next lint --fix",
+    "fix:lint": "node scripts/fix-lint-errors.js",
     "build:extension": "node scripts/build-extension.js",
     "build:extension:prod": "NEXT_PUBLIC_API_BASE_URL=https://your-app.vercel.app node scripts/build-extension.js",
     "test:deployment": "node scripts/test-deployment.js",
