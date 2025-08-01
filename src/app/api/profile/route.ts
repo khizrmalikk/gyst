@@ -47,7 +47,8 @@ export async function GET() {
           education: [],
           experience: [],
           certifications: [],
-          languages: []
+          languages: [],
+          credits: 10 // Default credits for new users
         }
 
         console.log('Creating profile with data:', profileData)
