@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     // Get Gmail integration
     const { data: integration, error: integrationError } = await supabaseAdmin
       .from('gmail_integrations')
-      .select('id, access_token, refresh_token, gmail_email, last_sync_at')
+      .select('id, access_token, refresh_token, gmail_email, last_sync_at, total_emails_processed, responses_found')
       .eq('user_id', userId)
       .eq('is_active', true)
       .eq('sync_enabled', true)
