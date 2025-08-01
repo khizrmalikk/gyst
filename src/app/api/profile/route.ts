@@ -111,7 +111,8 @@ export async function POST(request: NextRequest) {
       education: [],
       experience: [],
       certifications: [],
-      languages: []
+      languages: [],
+      credits: body.credits || 10 // Default to 10 credits if not specified
     }
 
     const profile = await createUserProfile(profileData)
