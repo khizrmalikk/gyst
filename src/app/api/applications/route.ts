@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
       const appStatusHistory = statusHistoryData.filter(history => history.application_id === app.id);
       
       // Parse application_data if it exists and is valid JSON
-      let parsedApplicationData = {};
+      let parsedApplicationData: any = {};
       try {
         if (app.application_data) {
           parsedApplicationData = typeof app.application_data === 'string' 
