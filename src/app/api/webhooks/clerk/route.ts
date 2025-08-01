@@ -66,7 +66,8 @@ export async function POST(request: NextRequest) {
           education: [],
           experience: [],
           certifications: [],
-          languages: []
+          languages: [],
+          credits: 10 // Default credits for new users via webhook
         }
 
         const profile = await createUserProfile(profileData)
