@@ -903,6 +903,67 @@ body {
   }
 }
 
+/* Enhanced button loading and disabled states */
+.btn.disabled-during-processing {
+  opacity: 0.4;
+  cursor: not-allowed;
+  position: relative;
+}
+
+.btn.disabled-during-processing::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.1);
+  pointer-events: none;
+}
+
+/* Progress bar animation for processing buttons */
+.btn.processing {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #66615E 0%, #949392 100%);
+  color: white;
+}
+
+.btn.processing::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  animation: progressSlide 2s infinite;
+}
+
+@keyframes progressSlide {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+/* Enhanced success state */
+.btn.success {
+  background: #10b981 !important;
+  color: white !important;
+  transform: scale(1);
+  animation: successPulse 0.6s ease-in-out;
+}
+
+/* Enhanced error state */  
+.btn.error {
+  background: #dc3545 !important;
+  color: white !important;
+  animation: errorShake 0.6s ease-in-out;
+}
+
 /* Status indicator enhancements */
 .status-dot.processing {
   box-shadow: 0 0 0 4px rgba(251, 191, 36, 0.3);

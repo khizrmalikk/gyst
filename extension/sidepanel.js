@@ -19,6 +19,22 @@ class SidePanelController {
     this.authChecked = false;
     this.isAuthenticated = false;
     this.currentUser = null;
+    
+    // Button management
+    this.allButtonIds = [
+      'refreshPageBtn',
+      'generateProfileBtn', 
+      'generateCVBtn',
+      'generateCoverLetterBtn',
+      'fillApplicationBtn',
+      'submitApplicationBtn',
+      'openDashboardBtn',
+      'analyzeFormBtn',
+      'generateCVOnlyBtn', 
+      'generateCoverLetterOnlyBtn',
+      'searchJobsBtn'
+    ];
+    this.currentActiveButton = null;
   }
 
   async init() {
@@ -660,6 +676,8 @@ class SidePanelController {
     }
 
     try {
+      // Set loading state for CV button
+      this.setLoadingState('generateCVBtn', '📄 Generating CV...');
       this.updateStatusBar('Processing', 'Generating CV...');
       
       console.log('📄 Generating CV for current job...');
@@ -698,11 +716,13 @@ class SidePanelController {
       document.body.removeChild(a);
 
       this.sessionData.cvGenerated = true;
+      this.clearLoadingState(true, '✅ CV Downloaded!');
       this.updateStatusBar('Ready', 'CV generated successfully');
       this.showMessage('CV downloaded successfully!', 'success');
       
     } catch (error) {
       console.error('❌ CV generation failed:', error);
+      this.clearLoadingState(false, '❌ Failed');
       this.updateStatusBar('Ready', 'CV generation failed');
       this.showMessage('Failed to generate CV: ' + error.message, 'error');
     }
@@ -722,6 +742,8 @@ class SidePanelController {
     }
 
     try {
+      // Set loading state for cover letter button
+      this.setLoadingState('generateCoverLetterBtn', '📝 Writing Letter...');
       this.updateStatusBar('Processing', 'Generating cover letter...');
       
       console.log('📝 Generating cover letter for current job...');
@@ -760,11 +782,13 @@ class SidePanelController {
       document.body.removeChild(a);
 
       this.sessionData.coverLetterGenerated = true;
+      this.clearLoadingState(true, '✅ Letter Ready!');
       this.updateStatusBar('Ready', 'Cover letter generated successfully');
       this.showMessage('Cover letter downloaded successfully!', 'success');
       
     } catch (error) {
       console.error('❌ Cover letter generation failed:', error);
+      this.clearLoadingState(false, '❌ Failed');
       this.updateStatusBar('Ready', 'Cover letter generation failed');
       this.showMessage('Failed to generate cover letter: ' + error.message, 'error');
     }
@@ -779,6 +803,8 @@ class SidePanelController {
     }
 
     try {
+      // Set loading state for fill application button
+      this.setLoadingState('fillApplicationBtn', '✍️ Filling Form...');
       this.updateStatusBar('Processing', 'Analyzing and filling form...');
       
       console.log('✍️ Filling application form...');
@@ -839,11 +865,13 @@ class SidePanelController {
       this.sessionData.formFieldsCount = fillData.formData?.length || 0;
       this.sessionData.aiResponsesCount = fillData.aiResponsesCount || 0;
       
+      this.clearLoadingState(true, '✅ Form Filled!');
       this.updateStatusBar('Ready', `Filled ${fillResponse.filled || 0} fields`);
       this.showMessage(`Form filled successfully! ${fillResponse.filled || 0} fields completed.`, 'success');
       
     } catch (error) {
       console.error('❌ Form filling failed:', error);
+      this.clearLoadingState(false, '❌ Failed');
       this.updateStatusBar('Ready', 'Form filling failed');
       this.showMessage('Failed to fill form: ' + error.message, 'error');
     }
@@ -949,33 +977,39 @@ class SidePanelController {
     const submitApplicationBtn = document.getElementById('submitApplicationBtn');
     
     // Enable/disable buttons based on page type and form detection
-    const isJobListing = this.currentPageType === 'job_listing';
+    const isValidPage = this.currentPageType === 'job_listing' || this.currentPageType === 'application_form';
+    const isApplicationForm = this.currentPageType === 'application_form';
     
-    if (generateCVBtn) {
-      generateCVBtn.disabled = !isJobListing;
-      generateCVBtn.textContent = isJobListing 
+    if (generateCVBtn && !generateCVBtn.hasAttribute('data-original-text')) {
+      generateCVBtn.disabled = !isValidPage;
+      generateCVBtn.textContent = isValidPage 
         ? '📄 Generate CV'
-        : '📄 Navigate to job listing first';
+        : '📄 Navigate to job page first';
     }
     
-    if (generateCoverLetterBtn) {
-      generateCoverLetterBtn.disabled = !isJobListing;
-      generateCoverLetterBtn.textContent = isJobListing
+    if (generateCoverLetterBtn && !generateCoverLetterBtn.hasAttribute('data-original-text')) {
+      generateCoverLetterBtn.disabled = !isValidPage;
+      generateCoverLetterBtn.textContent = isValidPage
         ? '📝 Generate Cover Letter'
-        : '📝 Navigate to job listing first';
+        : '📝 Navigate to job page first';
     }
     
-    if (fillApplicationBtn) {
-      const hasForm = this.detectedForms && this.detectedForms.length > 0;
+    if (fillApplicationBtn && !fillApplicationBtn.hasAttribute('data-original-text')) {
+      const hasForm = isApplicationForm && this.detectedForms && this.detectedForms.length > 0;
       fillApplicationBtn.disabled = !hasForm;
       fillApplicationBtn.textContent = hasForm
         ? '✍️ Fill Application Form'
-        : '✍️ No application form detected';
+        : isApplicationForm 
+          ? '✍️ No forms detected'
+          : '✍️ Navigate to application page';
     }
     
-    if (submitApplicationBtn) {
-      submitApplicationBtn.disabled = false; // Always allow marking as submitted
+    if (submitApplicationBtn && !submitApplicationBtn.hasAttribute('data-original-text')) {
+      submitApplicationBtn.disabled = !isValidPage; // Only enable on valid job pages
     }
+    
+    // Call the centralized button state update
+    this.updateButtonStates();
   }
 
   // Toggle advanced settings
@@ -1004,6 +1038,8 @@ class SidePanelController {
     }
 
     try {
+      // Set loading state for generate profile button
+      this.setLoadingState('generateProfileBtn', '✨ Creating Profile...');
       this.updateStatusBar('Processing', 'Creating tailored profile...');
       
       console.log('✨ Generating tailored profile for current job...');
@@ -1087,6 +1123,7 @@ class SidePanelController {
         
         // Update UI
         this.updateProfileSelector();
+        this.clearLoadingState(true, '✅ Profile Ready!');
         this.updateStatusBar('Ready', 'Profile created successfully');
         this.showMessage(`Tailored profile "${data.profile.label}" created successfully`, 'success');
       } else {
@@ -1094,6 +1131,7 @@ class SidePanelController {
       }
     } catch (error) {
       console.error('❌ Error generating tailored profile:', error);
+      this.clearLoadingState(false, '❌ Failed');
       this.updateStatusBar('Ready', 'Profile creation failed');
       this.showMessage('Failed to create tailored profile: ' + error.message, 'error');
     }
@@ -1359,6 +1397,107 @@ class SidePanelController {
       } else {
         statusDot.style.background = '#6b7280'; // gray
       }
+    }
+  }
+
+  // Button state management for loading states
+  setLoadingState(activeButtonId, loadingText = 'Processing...') {
+    console.log('⏳ Setting loading state for button:', activeButtonId);
+    
+    this.isProcessing = true;
+    this.currentActiveButton = activeButtonId;
+    
+    // Disable all buttons except the active one
+    this.allButtonIds.forEach(buttonId => {
+      const button = document.getElementById(buttonId);
+      if (button) {
+        if (buttonId === activeButtonId) {
+          // Active button: add loading state
+          button.classList.add('processing');
+          button.disabled = true;
+          
+          // Store original text if not already stored
+          if (!button.hasAttribute('data-original-text')) {
+            button.setAttribute('data-original-text', button.textContent);
+          }
+          button.textContent = loadingText;
+          
+        } else {
+          // Other buttons: disable and add disabled styling
+          button.disabled = true;
+          button.classList.add('disabled-during-processing');
+        }
+      }
+    });
+  }
+
+  clearLoadingState(success = true, successText = null, errorText = null) {
+    console.log('✅ Clearing loading state, success:', success);
+    
+    this.isProcessing = false;
+    const activeButtonId = this.currentActiveButton;
+    this.currentActiveButton = null;
+    
+    // Re-enable all buttons and restore states
+    this.allButtonIds.forEach(buttonId => {
+      const button = document.getElementById(buttonId);
+      if (button) {
+        // Remove loading/disabled states
+        button.classList.remove('processing', 'disabled-during-processing');
+        button.disabled = false;
+        
+        if (buttonId === activeButtonId) {
+          // Restore original text for active button
+          const originalText = button.getAttribute('data-original-text');
+          if (originalText) {
+            button.textContent = originalText;
+            button.removeAttribute('data-original-text');
+          }
+          
+          // Add success/error animation briefly
+          if (success) {
+            button.classList.add('success');
+            if (successText) {
+              const originalText = button.textContent;
+              button.textContent = successText;
+              setTimeout(() => {
+                button.textContent = originalText;
+              }, 2000);
+            }
+            setTimeout(() => button.classList.remove('success'), 600);
+          } else {
+            button.classList.add('error');
+            if (errorText) {
+              const originalText = button.textContent;
+              button.textContent = errorText;
+              setTimeout(() => {
+                button.textContent = originalText;
+              }, 2000);
+            }
+            setTimeout(() => button.classList.remove('error'), 600);
+          }
+        }
+      }
+    });
+    
+    // Re-apply any permanent disabled states based on current context
+    this.updateButtonStates();
+  }
+
+  // Update button states based on current context (not during loading)
+  updateButtonStates() {
+    if (this.isProcessing) return; // Don't update during processing
+    
+    const generateProfileBtn = document.getElementById('generateProfileBtn');
+    const fillApplicationBtn = document.getElementById('fillApplicationBtn');
+    
+    // Enable/disable buttons based on current state
+    if (generateProfileBtn) {
+      generateProfileBtn.disabled = (this.currentPageType === 'unknown');
+    }
+    
+    if (fillApplicationBtn) {
+      fillApplicationBtn.disabled = (this.currentPageType !== 'application_form' || !this.detectedForms || this.detectedForms.length === 0);
     }
   }
 

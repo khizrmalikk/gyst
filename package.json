@@ -6,7 +6,11 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "build:extension": "node scripts/build-extension.js",
+    "build:extension:prod": "NEXT_PUBLIC_API_BASE_URL=https://your-app.vercel.app node scripts/build-extension.js",
+    "test:deployment": "node scripts/test-deployment.js",
+    "test:deployment:prod": "NEXT_PUBLIC_API_BASE_URL=https://your-app.vercel.app node scripts/test-deployment.js"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.23.2",
