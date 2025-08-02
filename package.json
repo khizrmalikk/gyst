@@ -12,6 +12,8 @@
     "fix:lint": "node scripts/fix-lint-errors.js",
     "build:extension": "node scripts/build-extension.js",
     "build:extension:prod": "NEXT_PUBLIC_API_BASE_URL=https://your-app.vercel.app node scripts/build-extension.js",
+    "package:extension": "node scripts/package-extension.js",
+    "distribute:extension": "npm run build:extension:prod && npm run package:extension",
     "test:deployment": "node scripts/test-deployment.js",
     "test:deployment:prod": "NEXT_PUBLIC_API_BASE_URL=https://your-app.vercel.app node scripts/test-deployment.js"
   },
